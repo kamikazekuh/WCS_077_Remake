@@ -13,3 +13,23 @@ Installation:
     This will automatically load everything you need.
 
 
+
+For effects:
+
+    Download and install Source Python Extensions:
+    http://forums.eventscripts.com/viewtopic.php?f=125&t=46657
+    
+    Then download and install SPE Effects by Ayuto:
+    https://github.com/Ayuto/SPE-Effects
+    
+    Add
+    
+    es_load est_effect
+    
+    to your autoexec.cfg
+    
+    I'm not sure who made this addon, so I'm sorry for not giving credits.
+    
+    
+    
+    
