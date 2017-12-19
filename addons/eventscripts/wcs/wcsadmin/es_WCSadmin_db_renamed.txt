@@ -1,0 +1,35 @@
+"WCSadmin"
+{
+  // Edit the admins here !
+  // check the STEAM_ID_LAN example,
+  // it should be all self-explaining.
+  // if a player has no flags or all 0,
+  // he can just access the menu, but not execute
+  // anything. The Name is just for overview.
+  //
+  
+  "STEAM_ID_LAN"
+  {
+    "name" "all LAN players !!"
+    "give_xp_level" "1"
+    "give_money" "1"
+    "take_level" "1"
+    "reset_player" "1"
+    "script_settings" "1"
+  }
+  "STEAM_0:1:8770268"
+  {
+    "name" ":kami:"
+    "give_xp_level" "1"
+    "give_money" "1"
+    "take_level" "1"
+    "reset_player" "1"
+    "script_settings" "1"
+  }
+  "192.168.0.1"
+  {
+    "name" "Localhost player"
+    "give_xp_level" "1"
+    "give_money" "1"
+  }
+}

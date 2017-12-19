@@ -1,0 +1,20 @@
+- Install:
+Just put all files in the main wcs folder.
+es_xload wcs/WCSaddons  in the block load of the wcs.
+
+You must keep all the __init__.py files thats in the .zip file or else WCSaddons won't load.
+So there should be like this.
+wcs>__init__.py
+wcs>WCSaddons>__init__.py
+wcs>WCSaddons>addons>__init.py
+
+
+- Instructions:
+Add an addon by creating a folder
+use  WCSaddons_load <addonname>
+and  WCSaddons_unload <addonname>
+
+for load/unload: addonname without .py or .txt extention
+It will only load .py or es_.txt addons.
+
+

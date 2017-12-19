@@ -1,0 +1,63 @@
+////////////////////////////////////////
+// wcs - Warcraft:Source              //
+// ---------------------------------- //
+//  by kRypT0n!Te                     //
+//      http://wcs.despo-clan.de      //
+// ---------------------------------- //
+////////////////////////////////////////
+// wcs - Warcraft:Source : Orangebox  //
+// ---------------------------------- //
+//  by [Oddity]TeacherCreature        //
+//     http://wcs.warcraft-source.net //
+// ---------------------------------- //
+// Content of this subscript          //
+// - language management              //
+////////////////////////////////////////
+// script commands:
+// wcs_getlanguage <var> <id>
+////////////////////////////////////////
+
+block load
+{
+	es_xexists wcs_exists command "wcs_getlanguage"
+	if (server_var(wcs_exists) = "0") then es_xregcmd "wcs_getlanguage" "wcs/wcslanguage/wcs_getlanguage" "Returns the given ID-text in the current language"
+	// load the language DB
+	es_xkeygroupload "wcslanguage" "|wcs/wcslanguage"
+	// check the version
+	es_xsetinfo wcs_lng_set "0"
+	es_xexists wcs_exists variable "wcs_language"
+	if (server_var(wcs_exists) = "0") then es_xsetinfo wcs_language "en"
+	es_keygetvalue wcs_lng_set "wcslanguage" server_var(wcs_language) "wcs_lng_set"
+	// load often used stuff as a var
+	wcs_getlanguage "wcs_lng_back" "wcs_lng_back"
+	wcs_getlanguage "wcs_lng_next" "wcs_lng_next"
+	wcs_getlanguage "wcs_lng_exit" "wcs_lng_exit"
+	wcs_getlanguage "wcs_lng_page" "wcs_lng_page"
+	wcs_getlanguage "wcs_lng_ulti_immunity_a" "wcs_lng_ulti_immunity_a"
+	wcs_getlanguage "wcs_lng_ulti_immunity_v" "wcs_lng_ulti_immunity_v"
+}
+
+block unload
+{
+	es_xkeygroupdelete "wcslanguage"
+}
+
+// this block is quick&dirty, so it doesn't waste CPU time
+block wcs_getlanguage
+{
+	if (server_var(wcs_debug) > 1) then profile begin "getlanguage"
+	es_xsetinfo wcs_var "0"
+	es_xsetinfo wcs_lid "0"
+	es_xsetinfo wcs_lexists "0"
+	es_xgetargv wcs_var "1"
+	es_xgetargv wcs_lid "2"
+	es_exists wcs_lexists key "wcslanguage" server_var(wcs_language)
+	if (server_var(wcs_var) != "0") then if (server_var(wcs_lid) != "0") then if (server_var(wcs_lexists) = "1") then es_xsetinfo wcs_lexists "2"
+	if (server_var(wcs_lexists) = "2") do
+	{
+		es_setinfo server_var(wcs_var) "0"
+		es_keygetvalue server_var(wcs_var) "wcslanguage" server_var(wcs_language) server_var(wcs_lid)
+	}
+	if (server_var(wcs_var) = "0") then es_xsetinfo wcs_var "n/a"
+	if (server_var(wcs_debug) > 1) then profile end "getlanguage"
+}

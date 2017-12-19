@@ -1,0 +1,9 @@
+block load
+{
+	es_msg #multi #green[WCSaddons] You loaded me!
+}
+
+block unload
+{
+	es_msg #multi #green[WCSaddons] You unloaded me!
+}

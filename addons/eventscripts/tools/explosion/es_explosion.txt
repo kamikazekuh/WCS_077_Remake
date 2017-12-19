@@ -1,0 +1,16 @@
+block load
+{
+es_regcmd 
+
+block explosion
+    {
+      es_xset temphandle 0
+      es_give server_var(wcs_userid) env_explosion
+      es_fire server_var(wcs_userid) env_explosion addoutput "iMagnitude 400"
+      es_fire server_var(wcs_userid) env_explosion addoutput "iRadiusoverride 150"
+      es_fire server_var(wcs_userid) env_explosion addoutput "spawnflags 8"
+      es_getplayerhandle temphandle server_var(wcs_userid)
+      es_setindexprop server_var(eventscripts_lastgive) CBaseEntity.m_hOwnerEntity server_var(temphandle)
+      es_fire server_var(wcs_userid) env_explosion explode
+      es_delayed 0.1 es_xfire server_var(wcs_userid) env_explosion kill
+    }

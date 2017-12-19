@@ -1,0 +1,320 @@
+////////////////////////////////////////
+// wcs - Warcraft:Source              //
+// ---------------------------------- //
+//  by kRypT0n!Te                     //
+//      http://wcs.despo-clan.de      //
+// ---------------------------------- //
+////////////////////////////////////////
+// wcs - Warcraft:Source : Orangebox  //
+// ---------------------------------- //
+//  by [Oddity]TeacherCreature        //
+//     http://wcs.warcraft-source.net //
+// ---------------------------------- //
+// Content of this subscript          //
+// - top10 handling                   //
+////////////////////////////////////////
+// say commands:
+// wcstop, showtop10 (both the same)
+//
+// admin commands:
+// wcs_showtop10 <userid>
+// wcs_checktop10 <userid>
+// wcs_cleartop10
+//
+// wcs_top10switch (internal use)
+////////////////////////////////////////
+
+block load
+{
+	// register the commands
+	es_xexists wcs_exists command "wcstop"
+	if (server_var(wcs_exists) = 0) then es_xregsaycmd wcstop "wcs/wcstop10/wcs_showtop10" "Shows top10 players"
+	es_xexists wcs_exists command "showtop10"
+	if (server_var(wcs_exists) = 0) then es_xregsaycmd showtop10 "wcs/wcstop10/wcs_showtop10" "Shows top10 players"
+	es_xexists wcs_exists command "wcs_showtop10"
+	if (server_var(wcs_exists) = 0) then es_xregcmd wcs_showtop10 "wcs/wcstop10/wcs_showtop10" "Shows top10 players"
+	es_xexists wcs_exists command "wcs_top10switch"
+	if (server_var(wcs_exists) = 0) then es_xregcmd wcs_top10switch "wcs/wcstop10/wcs_top10switch" "Switches two places in top10"
+	es_xexists wcs_exists command "wcs_checktop10"
+	if (server_var(wcs_exists) = 0) then es_xregcmd wcs_checktop10 "wcs/wcstop10/wcs_checktop10" "Checks if a player goes in top10"
+	es_xexists wcs_exists command "wcs_cleartop10"
+	if (server_var(wcs_exists) = 0) then es_xregcmd wcs_cleartop10 "wcs/wcstop10/wcs_cleartop10" "Clears the top10 (not the player levels)"
+	es_xsetinfo wcs_a 0
+	es_xsetinfo wcs_b 0
+	// init the keygroup, create place 1-10
+	es_xkeygroupcreate "wcstop10"
+	es_xkeygroupload "wcstop10" "|wcs/wcstop10"
+	es_xsetinfo wcs_counter "1"
+	while "server_var(wcs_counter) <= 10" "es_keycreate wcstop10 server_var(wcs_counter);es_xmath wcs_counter + 1"
+}
+
+block unload
+{
+	if (server_var(wcs_turbomode) != "1") then es_xkeygroupsave wcstop10 "|wcs/wcstop10"
+	es_xkeygroupdelete "wcstop10"
+}
+
+event server
+{
+	if (server_var(wcs_turbomode) != "1") then es_xkeygroupsave wcstop10 "|wcs/wcstop10"
+}
+
+// >>>>>>>>>>>>>>>>> TOP10 RANKING >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+block wcs_checktop10
+{
+	if (server_var(wcs_debug) = "1") then echo wcs_checktop10 start
+	// "wcstop10"
+	// {
+	// "1"
+	//   {
+	//     "name"
+	//     "steamid"
+	//     "level"
+	//     "curlevel"
+	//     "currace"
+	//   }
+	//  ....
+	// }
+	es_xsetinfo wcs_sid 0
+	es_xsetinfo wcs_uid 0
+	es_xgetargv wcs_uid 1
+	es_keygetvalue wcs_sid "wcsuserdata" server_var(wcs_uid) "id"
+	es_xexists wcs_exists keygroup "wcstop10"
+	if (server_var(wcs_sid) = "0") then es_xsetinfo wcs_exists "0"
+	if (server_var(wcs_uid) = "0") then es_xsetinfo wcs_exists "0"
+	if (server_var(wcs_exists) = 1) do
+	{
+		// get minimum level
+		es_xsetinfo wcs_lvl_min "0"
+		// last place in top10 = min level
+		es_xkeygetvalue wcs_lvl_min "wcstop10" "10" "level"
+		// get the user level
+		es_keygetvalue wcs_race "wcsuserdata" server_var(wcs_uid) "race"
+		es_keygetvalue wcs_level "wcsuserdata" server_var(wcs_uid) "level"
+		es_keygetvalue wcs_total_level "wcsuserdata" server_var(wcs_uid) "total_level"
+		// check if player can reach top10
+		if (server_var(wcs_total_level) >= server_var(wcs_lvl_min)) do
+		{
+			// check if player is in top10
+			es_xsetinfo wcs_exists 0
+			es_xsetinfo wcs_pos_old 0
+			es_xforeachkey wcs_key in "wcstop10" "es_keygetvalue wcs_tmp wcstop10 server_var(wcs_key) steamid;if (server_var(wcs_tmp) = server_var(wcs_sid)) then es_xsetinfo wcs_exists 1;if (server_var(wcs_tmp) = server_var(wcs_sid)) then es_xsetinfo wcs_pos_old server_var(wcs_key)"
+			if (server_var(wcs_exists) = 1) do
+			{
+				// in top10 ! so find the place..
+				es_xsetinfo wcs_pos_entry 11
+				es_xsetinfo wcs_tmplevel 0
+				es_xsetinfo wcs_counter 10
+				while "server_var(wcs_counter) > 0" "es_keygetvalue wcs_tmplevel wcstop10 server_var(wcs_counter) level;if (server_var(wcs_tmplevel) < server_var(wcs_total_level)) then es_xsetinfo wcs_pos_entry server_var(wcs_counter);es_xmath wcs_counter - 1"
+				if (server_var(wcs_pos_entry) <= 10) do
+				{
+					if (server_var(wcs_pos_old) > server_var(wcs_pos_entry)) do
+					{
+						if (server_var(wcs_cfg_top10announce) = "0") do
+						{
+							wcs_getlanguage "wcs_lng" "wcs_lng_top10_sw"
+							es_format wcs_text "#lightgreen%1 : %2 -> #green%3" server_var(wcs_lng) server_var(wcs_pos_old) server_var(wcs_pos_entry)
+							es_tell server_var(wcs_uid) #multi server_var(wcs_text)
+						}
+						else do
+						{
+							wcs_getlanguage "wcs_lng" "wcs_lng_top10_sw_all"
+							es_getplayername wcs_name server_var(wcs_uid)
+							es_format wcs_text "#green%1 #lightgreen%2 : %3 -> #green%4" server_var(wcs_name) server_var(wcs_lng) server_var(wcs_pos_old) server_var(wcs_pos_entry)
+							es_msg #multi server_var(wcs_text)
+						}
+						// higher position
+						while "server_var(wcs_pos_old) > server_var(wcs_pos_entry)" "es wcs_top10switch server_var(wcs_pos_old);es_xmath wcs_pos_old - 1"
+						es_getplayername wcs_name server_var(wcs_uid)
+						es_keysetvalue wcstop10 server_var(wcs_pos_entry) name server_var(wcs_name)
+						es_keysetvalue wcstop10 server_var(wcs_pos_entry) steamid server_var(wcs_sid)
+						es_keysetvalue wcstop10 server_var(wcs_pos_entry) level server_var(wcs_total_level)
+						es_keysetvalue wcstop10 server_var(wcs_pos_entry) curlevel server_var(wcs_level)
+						es_keysetvalue wcstop10 server_var(wcs_pos_entry) currace server_var(wcs_race)
+					}
+					else do
+					{
+						// refresh the entry
+						es_getplayername wcs_name server_var(wcs_uid)
+						es_keysetvalue wcstop10 server_var(wcs_pos_old) name server_var(wcs_name)
+						es_keysetvalue wcstop10 server_var(wcs_pos_old) steamid server_var(wcs_sid)
+						es_keysetvalue wcstop10 server_var(wcs_pos_old) level server_var(wcs_total_level)
+						es_keysetvalue wcstop10 server_var(wcs_pos_old) curlevel server_var(wcs_level)
+						es_keysetvalue wcstop10 server_var(wcs_pos_old) currace server_var(wcs_race)
+					}
+				}
+			}
+			else do
+			{
+				// not in top10, find position to insert
+				es_xsetinfo wcs_pos_entry 11
+				es_xsetinfo wcs_tmplevel 0
+				es_xsetinfo wcs_counter 10
+				while "server_var(wcs_counter) > 0" "es_keygetvalue wcs_tmplevel wcstop10 server_var(wcs_counter) level;if (server_var(wcs_tmplevel) < server_var(wcs_total_level)) then es_xsetinfo wcs_pos_entry server_var(wcs_counter);es_xmath wcs_counter - 1"
+				if (server_var(wcs_pos_entry) <= 10) do
+				{
+					// shift all others
+					es_xsetinfo wcs_counter 10
+					while "server_var(wcs_counter) >= server_var(wcs_pos_entry)" "es_setinfo wcs_counter2 server_var(wcs_counter);es_xmath wcs_counter2 + 1;es_keyrename wcstop10 server_var(wcs_counter) server_var(wcs_counter2);es_xmath wcs_counter - 1"
+					// insert new
+					es_keycreate wcstop10 server_var(wcs_pos_entry)
+					es_xkeydelete wcstop10 11
+					es_getplayername wcs_name server_var(wcs_uid)
+					es_keysetvalue wcstop10 server_var(wcs_pos_entry) name server_var(wcs_name)
+					es_keysetvalue wcstop10 server_var(wcs_pos_entry) steamid server_var(wcs_sid)
+					es_keysetvalue wcstop10 server_var(wcs_pos_entry) level server_var(wcs_total_level)
+					es_keysetvalue wcstop10 server_var(wcs_pos_entry) curlevel server_var(wcs_level)
+					es_keysetvalue wcstop10 server_var(wcs_pos_entry) currace server_var(wcs_race)
+					wcs_getlanguage "wcs_lng" "wcs_lng_top10_entry"
+					es_format wcs_text "#lightgreen%1 : #green%2" server_var(wcs_lng) server_var(wcs_pos_entry)
+					es_tell server_var(wcs_uid) #multi server_var(wcs_text)
+				}
+			}
+		}
+		else do
+		{
+			es_math wcs_total_level - server_var(wcs_lvl_min)
+			if (server_var(wcs_total_level) > 0) do
+			{
+				wcs_getlanguage "wcs_lng" "wcs_lng_notop10"
+				es_format wcs_text server_var(wcs_lng) server_var(wcs_total_level)
+				es_tell server_var(wcs_uid) #multi server_var(wcs_text)
+			}
+		}
+	}
+	if (server_var(wcs_debug) = "1") then echo wcs_checktop10 end
+}
+
+block wcs_top10switch
+{
+	// get pos a and switch with the one above
+	es_xgetargv wcs_a 1
+	es_xcopy wcs_b wcs_a
+	es_xmath wcs_b - 1
+	es_keyrename "wcstop10" server_var(wcs_a) "tmp"
+	es_keyrename "wcstop10" server_var(wcs_b) server_var(wcs_a)
+	es_keyrename "wcstop10" "tmp" server_var(wcs_b)
+	// cleanup
+	es_xexists wcs_exists key "wcstop10" "tmp"
+	if (server_var(wcs_exists) = "1") then es_xkeydelete "wcstop10" "tmp"
+	es_xexists wcs_exists key "wcstop10" "0"
+	if (server_var(wcs_exists) = "1") then es_xkeydelete "wcstop10" "0"
+	es_xexists wcs_exists key "wcstop10" "11"
+	if (server_var(wcs_exists) = "1") then es_xkeydelete "wcstop10" "11"
+}
+
+block wcs_showtop10
+{
+	if (server_var(wcs_debug) = "1") then echo wcs_showtop10 start
+	// first, is it a custom command ?
+	es_xsetinfo wcs_userid 0
+	es_xgetargv wcs_userid 1
+	es_exists wcs_exists userid server_var(wcs_userid)
+	if (server_var(wcs_exists) = 0) do
+	{
+		// or a say command
+		es_xgetcmduserid wcs_userid
+		es_exists wcs_exists userid server_var(wcs_userid)
+	}
+	if (server_var(wcs_exists) = 1) do
+	{
+		es_exists wcs_exists key "wcsuserdata" server_var(wcs_userid)
+		if (server_var(wcs_exists) = "0") then es_xkeycreate "wcsuserdata" server_var(wcs_userid)
+		es_keysetvalue "wcsuserdata" server_var(wcs_userid) "menu" "top10"
+		es_keysetvalue "wcsuserdata" server_var(wcs_userid) "page" "1"
+		es_xdoblock wcs/wcstop10/wcs_showtop10_popup
+	}
+	if (server_var(wcs_debug) = "1") then echo wcs_showtop10 end
+}
+
+block wcs_showtop10_popup
+{
+	if (server_var(wcs_debug) = "1") then echo wcs_showtop10_popup start
+	// get the page and create the content
+	es_keygetvalue wcs_page wcsuserdata server_var(wcs_userid) page
+	wcs_getlanguage "wcs_lng" "wcs_lng_top10"
+	es_format wcs_text "%1\n " server_var(wcs_lng)
+	if (server_var(wcs_page) = 1) do
+	{
+		es_xsetinfo wcs_counter "1"
+		while "server_var(wcs_counter) <= 5" "es_xdoblock wcs/wcstop10/wcs_showtop10_init;es_xmath wcs_counter + 1"
+		es_format wcs_text "%1\n \n->9. %2\n0. %3" server_var(wcs_text) server_var(wcs_lng_next) server_var(wcs_lng_exit)
+	}
+	if (server_var(wcs_page) = 2) do
+	{
+		es_xsetinfo wcs_counter "6"
+		while "server_var(wcs_counter) <= 10" "es_xdoblock wcs/wcstop10/wcs_showtop10_init;es_xmath wcs_counter + 1"
+		es_format wcs_text "%1\n \n->8. %2\n0. %3" server_var(wcs_text) server_var(wcs_lng_back) server_var(wcs_lng_exit)
+	}
+	es_strlen wcs_strlen server_var(wcs_text)
+	if (server_var(wcs_strlen) > 1) then es_xmenu 0 server_var(wcs_userid) server_var(wcs_text)
+	if (server_var(wcs_debug) = "1") then echo wcs_showtop10_popup end
+}
+
+block wcs_showtop10_handle
+{
+	es_setinfo wcs_userid event_var(userid)
+	es_keygetvalue wcs_page wcsuserdata server_var(wcs_userid) page
+	if (event_var(commandstring) = "8") do
+	{
+		// 8=back, only on page 2
+		if (server_var(wcs_page) = "2") do
+		{
+			es_keysetvalue "wcsuserdata" event_var(userid) "page" "1"
+			es_xdoblock wcs/wcstop10/wcs_showtop10_popup
+		}
+	}
+	if (event_var(commandstring) = "9") do
+	{
+		// 9=next, only on page 1
+		if (server_var(wcs_page) = "1") do
+		{
+			es_keysetvalue "wcsuserdata" event_var(userid) "page" "2"
+			es_xdoblock wcs/wcstop10/wcs_showtop10_popup
+		}
+	}
+	if (event_var(commandstring) != "8") then if (event_var(commandstring) != "9") then es_xkeysetvalue "wcsuserdata" event_var(userid) "menu" "0"
+}
+
+block wcs_showtop10_init
+{
+	es_exists wcs_exists key wcstop10 server_var(wcs_counter)
+	if (server_var(wcs_exists) = 1) do
+	{
+		es_keygetvalue wcs_name wcstop10 server_var(wcs_counter) name
+		if (server_var(wcs_name) != 0) do
+		{
+			// get all the values and create the text
+			es_keygetvalue wcs_level wcstop10 server_var(wcs_counter) level
+			es_keygetvalue wcs_curlevel wcstop10 server_var(wcs_counter) curlevel
+			es_keygetvalue wcs_race wcstop10 server_var(wcs_counter) currace
+			if (server_var(wcs_race) != "0") then es_xkeygetvalue wcs_racename wcsraces server_var(wcs_race) name
+			if (server_var(wcs_race) = "0") then es_xsetinfo wcs_racename "-"
+			wcs_getlanguage "wcs_lng" "wcs_lng_total"
+			wcs_getlanguage "wcs_lng2" "wcs_lng_level"
+			es_format wcs_text "%1\n->%2. %3\n %4 %5" server_var(wcs_text) server_var(wcs_counter) server_var(wcs_name) server_var(wcs_lng) server_var(wcs_lng2)
+			wcs_getlanguage "wcs_lng" "wcs_lng_playing"
+			es_format wcs_text "%1 %2, %3 %4 %5 %6" server_var(wcs_text) server_var(wcs_level) server_var(wcs_lng) server_var(wcs_racename) server_var(wcs_lng2) server_var(wcs_curlevel)
+		}
+		else do
+		{
+			es_format wcs_text "%1\n->%2. -" server_var(wcs_text) server_var(wcs_counter)
+		}
+	}
+	else do
+	{
+		es_format wcs_text "%1\n->%2. -" server_var(wcs_text) server_var(wcs_counter)
+	}
+}
+
+block wcs_cleartop10
+{
+	// clear the top10, and create empty place 1-10
+	es_xkeygroupdelete "wcstop10"
+	es_xkeygroupcreate "wcstop10"
+	es_xsetinfo wcs_counter "1"
+	while "server_var(wcs_counter) <= 10" "es_keycreate wcstop10 server_var(wcs_counter);es_xmath wcs_counter + 1"
+	es_xkeygroupsave "wcstop10" "|wcs/wcstop10"
+	es_xmsg #lightgreen "wcs : Top10 cleared"
+}
+

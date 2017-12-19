@@ -1,0 +1,12 @@
+event player_death
+{
+	es_xset wcs_randomrace 0
+	if (event_var(es_steamid) == BOT) do
+	{
+		es_rand wcs_randomrace 1 server_var(wcs_numberofraces)
+		if (server_var(wcs_randomrace) > 0) do
+		{
+			es wcs_forcerace event_var(userid) server_var(wcs_randomrace)
+		}
+	}
+}

@@ -1,0 +1,11 @@
+"wcscategories"
+{
+"1"
+   {
+	"name" "Test1"
+   }
+"2"
+   {
+	"name" "Test2"
+   }
+}

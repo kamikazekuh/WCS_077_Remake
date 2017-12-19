@@ -1,0 +1,542 @@
+"wcsshop"
+{
+
+//  Format:
+//  "number"                   // unique ID !!
+//  {
+//    "name"        "Name"     // The name of the item, keep it short
+//    "description" "text"     // Description of the item
+//    "category"    "number"   // number is 1-5, sorts the item in the category enhancements, powerup, attack, defense, specials
+//    "cost"        "cost"     // The cost of the item
+//    "level"       "number"   // Required level to buy/use this item, default is 0
+//    "dab"         "0/1/2"    // Player must to be dead (0), alive (1) or both (2) to buy
+//    "duration"    "number"   // only this round (0) or until death (1), doesn't work with player_buy
+//    "maxamount"   "0"        // defines how many of the item can be purchased each round (good to control the health items)
+//    "itemconfig"  "type"     // Valid types are: player_buy (default), player_death,
+//                             // player_attacker, player_victim, player_spawn, player_say
+//                             // the cmd is executed on this event
+//    "cmdbuy"      "code"     // The command is run on purchase
+//    "cmdactivate" "code"     // The command is run when item is activated, not used with player_buy
+//  }
+// in CS:S maximum HP is 511, maximum armor is 127, higher values will start at 0 again
+//
+
+  "1"
+  {
+  "name"        "wcs_lng_s_cloak1"
+  "description" "wcs_lng_s_cloak1d"
+  "shortname"   "cloak1"
+  "cost"        "2000"
+  "category"    "1"
+  "level"       "0"
+  "dab"         "1"
+  "duration"    "1"
+  "maxamount"   "1"
+  "itemconfig"  "player_spawn"
+  "cmdbuy"      "es_keygetvalue wcs_invis WCSuserdata event_var(userid) invisp;if (server_var(wcs_invis) < 50) then wcs_color event_var(userid) 255 255 255 127 0;if (server_var(wcs_invis) < 50) then es_xkeysetvalue WCSuserdata event_var(userid) invisp 50"
+  "cmdactivate" "es_keygetvalue wcs_invis WCSuserdata event_var(userid) invisp;if (server_var(wcs_invis) < 50) then wcs_color event_var(userid) 255 255 255 127 0;if (server_var(wcs_invis) < 50) then es_xkeysetvalue WCSuserdata event_var(userid) invisp 50"
+  }
+
+  "2"
+  {
+  "name"        "wcs_lng_s_cloak2"
+  "description" "wcs_lng_s_cloak2d"
+  "shortname"   "cloak2"
+  "category"    "1"
+  "cost"        "3500"
+  "level"       "4"
+  "dab"         "1"
+  "duration"    "1"
+  "maxamount"   "1"
+  "itemconfig"  "player_spawn"
+  "cmdbuy"      "es_keygetvalue wcs_invis WCSuserdata event_var(userid) invisp;if (server_var(wcs_invis) < 75) then wcs_color event_var(userid) 255 255 255 75 1;if (server_var(wcs_invis) < 75) then es_xkeysetvalue WCSuserdata event_var(userid) invisp 75"
+  "cmdactivate" "es_keygetvalue wcs_invis WCSuserdata event_var(userid) invisp;if (server_var(wcs_invis) < 75) then wcs_color event_var(userid) 255 255 255 75 1;if (server_var(wcs_invis) < 75) then es_xkeysetvalue WCSuserdata event_var(userid) invisp 75"
+  }
+
+  "3"
+  {
+  "name"        "wcs_lng_s_tomehp"
+  "description" "wcs_lng_s_tomehpd"
+  "shortname"   "tomehp"
+  "category"    "2"
+  "cost"        "5900"
+  "level"       "0"
+  "dab"         "1"
+  "duration"    "0"
+  "maxamount"   "1"
+  "itemconfig"  "player_buy"
+  "cmdbuy"      "es playerset healthadd event_var(userid) 100"
+  "cmdactivate" "0"
+  }
+
+  "4"
+  {
+  "name"        "wcs_lng_s_periapthp"
+  "description" "wcs_lng_s_periapthpd"
+  "shortname"   "perihp"
+  "category"    "2"
+  "cost"        "3500"
+  "level"       "0"
+  "dab"         "1"
+  "duration"    "1"
+  "maxamount"   "2"
+  "itemconfig"  "player_spawn"
+  "cmdbuy"      "es playerset healthadd event_var(userid) 50"
+  "cmdactivate" "es playerset healthadd event_var(userid) 50"
+  }
+
+  "5"
+  {
+  "name"        "wcs_lng_s_ringarm"
+  "description" "wcs_lng_s_ringarmd"
+  "shortname"   "ringarm"
+  "category"    "2"
+  "cost"        "1000"
+  "level"       "0"
+  "dab"         "1"
+  "duration"    "1"
+  "maxamount"   "2"
+  "itemconfig"  "player_spawn"
+  "cmdbuy"      "es_delayed 1 es_give event_var(userid) item_assaultsuit;es playerset armoradd event_var(userid) 20;if (server_var(wcs_game) != server_var(wcs_game_css)) then playerset healthadd event_var(userid) 120;es wcs_getlanguage wcs_lng wcs_lng_s_armornotice;es_tell event_var(userid) #multi server_var(wcs_lng)"
+  "cmdactivate" "es_delayed 1 es_give event_var(userid) item_assaultsuit;es playerset armoradd event_var(userid) 20;if (server_var(wcs_game) != server_var(wcs_game_css)) then playerset healthadd event_var(userid) 120;es wcs_getlanguage wcs_lng wcs_lng_s_armornotice;es_tell event_var(userid) #multi server_var(wcs_lng)"
+  }
+
+  "6"
+  {
+  "name"        "wcs_lng_s_bootspeed"
+  "description" "wcs_lng_s_bootspeedd"
+  "shortname"   "bootspeed"
+  "category"    "1"
+  "cost"        "3000"
+  "level"       "4"
+  "dab"         "1"
+  "duration"    "1"
+  "maxamount"   "0"
+  "itemconfig"  "player_spawn"
+  "cmdbuy"      "es_keygetvalue wcs_speed WCSuserdata event_var(userid) speed;if (server_var(wcs_speed) = 0) then es_xset wcs_speed 1.0;es_xmath wcs_speed + 0.2;es playerset speed event_var(userid) server_var(wcs_speed);es_keysetvalue WCSuserdata event_var(userid) speed server_var(wcs_speed)"
+  "cmdactivate" "es_keygetvalue wcs_speed WCSuserdata event_var(userid) speed;if (server_var(wcs_speed) = 0) then es_xset wcs_speed 1.0;es_xmath wcs_speed + 0.2;es playerset speed event_var(userid) server_var(wcs_speed);es_keysetvalue WCSuserdata event_var(userid) speed server_var(wcs_speed)"
+  }
+
+  "7"
+  {
+  "name"        "wcs_lng_s_lifepres"
+  "description" "wcs_lng_s_lifepresd"
+  "shortname"   "lifepres"
+  "category"    "2"
+  "cost"        "3500"
+  "level"       "2"
+  "dab"         "1"
+  "duration"    "0"
+  "maxamount"   "2"
+  "itemconfig"  "player_buy"
+  "cmdbuy"      "es playerset healthadd event_var(userid) + 50;es_give event_var(userid) item_assaultsuit;es wcs_getlanguage wcs_lng wcs_lng_s_armornotice;es_tell event_var(userid) #multi server_var(wcs_lng)"
+  "cmdactivate" "0"
+  }
+
+  "8"
+  {
+  "name"        "wcs_lng_s_sockf"
+  "description" "wcs_lng_s_sockfd"
+  "shortname"   "sockf"
+  "category"    "1"
+  "cost"        "2500"
+  "level"       "0"
+  "dab"         "1"
+  "duration"    "1"
+  "maxamount"   "1"
+  "itemconfig"  "player_spawn"
+  "cmdbuy"      "es_keygetvalue wcs_gravity WCSuserdata event_var(userid) gravity;if (server_var(wcs_gravity) = 0) then es_xset wcs_gravity 1.0;if (server_var(wcs_gravity) > 0.5) then wcs gravity event_var(userid) 0.5;if (server_var(wcs_gravity) > 0.5) then es_xkeysetvalue WCSuserdata event_var(userid) gravity 0.5"
+  "cmdactivate" "es_keygetvalue wcs_gravity WCSuserdata event_var(userid) gravity;if (server_var(wcs_gravity) = 0) then es_xset wcs_gravity 1.0;if (server_var(wcs_gravity) > 0.5) then wcs gravity event_var(userid) 0.5;if (server_var(wcs_gravity) > 0.5) then es_xkeysetvalue WCSuserdata event_var(userid) gravity 0.5"
+  }
+
+  "9"
+  {
+  "name"        "wcs_lng_s_invul"
+  "description" "wcs_lng_s_invuld"
+  "shortname"   "invul"
+  "category"    "2"
+  "cost"        "7000"
+  "level"       "0"
+  "dab"         "1"
+  "duration"    "0"
+  "maxamount"   "2"
+  "itemconfig"  "player_buy"
+  "cmdbuy"      "es wcs_setfx god event_var(userid) = 1;es_delayed 7 wcs_setfx god event_var(userid) = 0;es_delayed 2 es_centertell event_var(userid) 5 ..;es_delayed 3 es_centertell event_var(userid) 4 ..;es_delayed 4 es_centertell event_var(userid) 3 ..;es_delayed 5 es_centertell event_var(userid) 2 ..;es_delayed 6 es_centertell event_var(userid) 1 .."
+  "cmdactivate" "0"
+  }
+
+  "10"
+  {
+  "name"        "wcs_lng_s_tomexp"
+  "description" "wcs_lng_s_tomexpd"
+  "shortname"   "tomexp"
+  "category"    "5"
+  "cost"        "2500"
+  "level"       "0"
+  "dab"         "2"
+  "duration"    "0"
+  "maxamount"   "0"
+  "itemconfig"  "player_buy"
+  "cmdbuy"      "es wcs_givexp event_var(userid) 100 0 1"
+  "cmdactivate" "0"
+  }
+
+  "11"
+  {
+  "name"        "wcs_lng_s_disguiser"
+  "description" "wcs_lng_s_disguiserd"
+  "shortname"   "disguiser"
+  "category"    "5"
+  "cost"        "5500"
+  "level"       "0"
+  "dab"         "1"
+  "duration"    "0"
+  "maxamount"   "1"
+  "itemconfig"  "player_buy"
+  "cmdbuy"      "if (event_var(es_userteam) = 3) then playerset model event_var(userid) player/t_phoenix;if (event_var(es_userteam) = 2) then playerset model event_var(userid) player/ct_urban"
+  "cmdactivate" "0"
+  }
+
+  "12"
+  {
+  "name"        "wcs_lng_s_secwpn"
+  "description" "wcs_lng_s_secwpnd"
+  "shortname"   "secwpn"
+  "category"    "3"
+  "cost"        "400"
+  "level"       "0"
+  "dab"         "1"
+  "duration"    "1"
+  "maxamount"   "0"
+  "itemconfig"  "player_spawn"
+  "cmdbuy"      "es playerset clip event_var(userid) 2 50"
+  "cmdactivate" "es playerset clip event_var(userid) 2 50"
+  }
+
+  "13"
+  {
+  "name"        "wcs_lng_s_maskd"
+  "description" "wcs_lng_s_maskdd"
+  "shortname"   "maskd"
+  "category"    "3"
+  "cost"        "4000"
+  "level"       "0"
+  "dab"         "1"
+  "duration"    "1"
+  "maxamount"   "2"
+  "itemconfig"  "player_attacker"
+  "cmdbuy"      "0"
+  "shopalias_msk" "es_set wcs_dmg event_var(dmg_health);es_xmath wcs_dmg float;es_xmath wcs_dmg / 10.0;es wcs_decimal wcs_dmg server_var(wcs_dmg);if (server_var(wcs_dmg) > 0) then wcs_setfx health event_var(attacker) + server_var(wcs_dmg) 0;if (server_var(wcs_dmg) > 0) then es_centertell event_var(attacker) + server_var(wcs_dmg) HP"
+  "cmdactivate" "if (server_var(wcs_dice) <= 40) then shopalias_msk"
+  }
+
+  "14"
+  {
+  "name"        "wcs_lng_s_claws"
+  "description" "wcs_lng_s_clawsd"
+  "shortname"   "claws"
+  "category"    "3"
+  "cost"        "1000"
+  "level"       "0"
+  "dab"         "1"
+  "duration"    "1"
+  "maxamount"   "1"
+  "itemconfig"  "player_attacker"
+  "cmdbuy"      "0"
+  "cmdactivate" "es wcs damage event_var(userid) event_var(attacker) 6;esnq es_centertell event_var(attacker) + 6 dmg;wcs_getlanguage wcs_lng wcs_lng_s_clawsa;esnq es_centertell event_var(userid) server_var(wcs_lng)"
+  }
+
+  "15"
+  {
+  "name"        "wcs_lng_s_orb"
+  "description" "wcs_lng_s_orbd"
+  "shortname"   "orb"
+  "category"    "3"
+  "cost"        "3000"
+  "level"       "0"
+  "dab"         "1"
+  "duration"    "1"
+  "maxamount"   "1"
+  "itemconfig"  "player_attacker"
+  "cmdbuy"      "0"
+  "cmdactivate" "es playerset speed event_var(userid) 0.7;es_delayed 3 wcs_removefx speed event_var(userid);wcs_getlanguage wcs_lng wcs_lng_s_orb1;esnq es_centertell event_var(attacker) server_var(wcs_lng);wcs_getlanguage wcs_lng wcs_lng_s_orb2;esnq es_centertell event_var(userid) server_var(wcs_lng)"
+  }
+
+  "16"
+  {
+  "name"        "wcs_lng_s_dust"
+  "description" "wcs_lng_s_dustd"
+  "shortname"   "dust"
+  "category"    "3"
+  "cost"        "1000"
+  "level"       "0"
+  "dab"         "1"
+  "duration"    "1"
+  "maxamount"   "1"
+  "itemconfig"  "player_attacker"
+  "cmdbuy"      "0"
+  "shopalias_dst" "es wcs_color event_var(userid) 255 255 255 255 1;es_keysetvalue WCSuserdata event_var(userid) invisp 0;wcs_getlanguage wcs_lng wcs_lng_s_invisdestr;es_format wcs_lng server_var(wcs_lng) event_var(es_username);es_tell event_var(userid) #multi server_var(wcs_lng);es_tell event_var(attacker) #multi server_var(wcs_lng)"
+  "cmdactivate" "es_keygetvalue wcs_tmp WCSuserdata event_var(userid) invisp;if (server_var(wcs_tmp) != 0) then shopalias_dst"
+  }
+
+  "17"
+  {
+  "name"        "wcs_lng_s_respawn"
+  "description" "wcs_lng_s_respawnd"
+  "shortname"   "respawn"
+  "category"    "5"
+  "cost"        "4200"
+  "level"       "0"
+  "dab"         "2"
+  "duration"    "1"
+  "maxamount"   "1"
+  "itemconfig"  "player_death"
+  "cmdbuy"      "if (event_var(es_userdead) = 1) then es_xdelayed 2 wcs spawn event_var(userid);if (event_var(es_userdead) = 1) then es_xkeysetvalue WCSuserdata event_var(userid) respawn 0;if (event_var(es_userdead) = 0) then es_xkeysetvalue WCSuserdata event_var(userid) respawn 1"
+  "cmdactivate" "es_keygetvalue wcs_respawn WCSuserdata event_var(userid) respawn;if (server_var(wcs_respawn) = 1) then es_xkeysetvalue WCSuserdata event_var(userid) respawn 0;if (server_var(wcs_respawn) = 1) then es_xdelayed 5 wcs spawn event_var(userid);wcs_getlanguage wcs_lng wcs_lng_s_respawna;if (server_var(wcs_respawn) = 1) then es_xdelayed 4.5 es_xtell event_var(userid) #multi server_var(wcs_lng)"
+  }
+
+  "18"
+  {
+  "name"        "wcs_lng_s_stonehp"
+  "description" "wcs_lng_s_stonehpd"
+  "shortname"   "stonehp"
+  "category"    "2"
+  "cost"        "4000"
+  "level"       "0"
+  "dab"         "1"
+  "duration"    "1"
+  "maxamount"   "1"
+  "itemconfig"  "player_say"
+  "cmdbuy"      "es playerset healthadd event_var(userid) 50"
+  "cmdactivate" "if (event_var(text) = health) then playerset healthadd event_var(userid) 100;if (event_var(text) = health) then es_xkeysetvalue server_var(wcs_type) event_var(userid) server_var(wcs_itemslot) 0;if (event_var(text) = health) then es_xkeysetvalue server_var(wcs_type) event_var(userid) server_var(wcs_itemdescrslot) 0"
+  }
+
+  "19"
+  {
+  "name"        "wcs_lng_s_helmp"
+  "description" "wcs_lng_s_helmpd"
+  "shortname"   "helmp"
+  "category"    "4"
+  "cost"        "3500"
+  "level"       "5"
+  "dab"         "1"
+  "duration"    "1"
+  "maxamount"   "1"
+  "itemconfig"  "player_victim"
+  "cmdbuy"      "0"
+  "cmdactivate" "if (event_var(dmg_health) > 5) then playerset healthadd event_var(userid) 4;if (event_var(dmg_health) > 5) then wcs_getlanguage wcs_lng wcs_lng_s_helmpa;if (event_var(dmg_health) > 5) then es_centertell event_var(userid) server_var(wcs_lng)"
+  }
+  
+  "20"
+  {
+  "name"        "wcs_lng_s_necklace"
+  "description" "wcs_lng_s_necklaced"
+  "shortname"   "necklace"
+  "category"    "4"
+  "cost"        "1000"
+  "level"       "10"
+  "dab"         "1"
+  "duration"    "1"
+  "maxamount"   "1"
+  "itemconfig"  "player_buy"
+  "cmdbuy"      "es_keysetvalue WCSuserdata event_var(userid) ulti_immunity 1"
+  "cmdactivate" "0"
+  }
+
+  "21"
+  {
+  "name"        "wcs_lng_s_gloves"
+  "description" "wcs_lng_s_glovesd"
+  "shortname"   "gloves"
+  "category"    "5"
+  "cost"        "2500"
+  "level"       "0"
+  "dab"         "1"
+  "duration"    "0"
+  "maxamount"   "2"
+  "itemconfig"  "player_buy"
+  "shopalias_glv" "es_delayed 3 wcs give event_var(userid) server_var(wcs_grenade);es_delayed 13 wcs give event_var(userid) server_var(wcs_grenade);es_delayed 23 wcs give event_var(userid) server_var(wcs_grenade);es_delayed 33 wcs give event_var(userid) server_var(wcs_grenade)"
+  "cmdbuy"      "es_xset wcs_grenade 0;es_set wcs_grenade weapon_hegrenade;if (server_var(wcs_game) = server_var(wcs_game_dods)) then es_xif (event_var(es_userteam) = 2) then es_xset wcs_grenade frag_us;if (server_var(wcs_game) = server_var(wcs_game_dods)) then es_xif (event_var(es_userteam) = 3) then es_xset wcs_grenade frag_ger;shopalias_glv"
+  "cmdactivate" "0"
+  }
+
+  "22"
+  {
+  "name"        "wcs_lng_s_mole"
+  "description" "wcs_lng_s_moled"
+  "shortname"   "mole"
+  "category"    "5"
+  "cost"        "10000"
+  "level"       "0"
+  "dab"         "2"
+  "duration"    "0"
+  "maxamount"   "1"
+  "itemconfig"  "player_buy"
+  "cmdbuy"      "es_keysetvalue WCSuserdata event_var(userid) mole 1"
+  "cmdactivate" "0"
+  }
+
+  "23"
+  {
+  "name"        "wcs_lng_s_ring"
+  "description" "wcs_lng_s_ringd"
+  "shortname"   "ring"
+  "category"    "4"
+  "cost"        "4000"
+  "level"       "0"
+  "dab"         "1"
+  "duration"    "0"
+  "maxamount"   "1"
+  "itemconfig"  "player_buy"
+  "cmdbuy"      "es wcs_regeneration event_var(userid) 2 2 200 200 0"
+  "cmdactivate" "0"
+  }
+
+  "24"
+  {
+  "name"        "wcs_lng_s_amulet"
+  "description" "wcs_lng_s_amuletd"
+  "shortname"   "amulet"
+  "category"    "5"
+  "cost"        "2800"
+  "level"       "0"
+  "dab"         "1"
+  "duration"    "1"
+  "maxamount"   "1"
+  "itemconfig"  "player_buy"
+  "cmdbuy"      "es_keysetvalue WCSuserdata event_var(userid) silentwalk 1;es_setplayerprop event_var(userid) CBasePlayer.m_fFlags 2;wcs_getlanguage wcs_lng wcs_lng_s_amuleta;es_tell event_var(userid) #multi server_var(wcs_lng)"
+  "cmdactivate" "es_keysetvalue WCSuserdata event_var(userid) silentwalk 1;es_setplayerprop event_var(userid) CBasePlayer.m_fFlags 2;wcs_getlanguage wcs_lng wcs_lng_s_amuleta;es_tell event_var(userid) #multi server_var(wcs_lng)"
+  }
+  
+  "25"
+  {
+  "name"        "wcs_lng_s_moleprot"
+  "description" "wcs_lng_s_moleprotd"
+  "shortname"   "moleprot"
+  "category"    "4"
+  "cost"        "1000"
+  "level"       "0"
+  "dab"         "1"
+  "duration"    "0"
+  "maxamount"   "1"
+  "itemconfig"  "player_victim"
+  "shopalias_mp" "es_xrand wcs_dmg 1 5;es wcs damage event_var(attacker) server_var(wcs_userid) server_var(wcs_dmg);es playerset healthadd event_var(userid) event_var(dmg_health);wcs_getlanguage wcs_lng wcs_lng_s_moleprota;es_tell event_var(userid) #multi server_var(wcs_lng)"
+  "cmdbuy"      "0"
+  "cmdactivate" "es_keygetvalue wcs_mole WCSuserdata event_var(attacker) ismole;if (server_var(wcs_mole) = 1) then shopalias_mp"
+  }
+
+  "26"
+  {
+  "name"        "wcs_lng_s_helme"
+  "description" "wcs_lng_s_helmed"
+  "shortname"   "helme"
+  "category"    "4"
+  "cost"        "4000"
+  "level"       "0"
+  "dab"         "1"
+  "duration"    "0"
+  "maxamount"   "1"
+  "itemconfig"  "player_victim"
+  "cmdbuy"      "0"
+  "cmdactivate" "if (event_var(hitgroup) = 1) then playerset healthadd event_var(userid) + event_var(dmg_health);if (event_var(hitgroup) = 1) then wcs_getlanguage wcs_lng wcs_lng_s_helmea;if (event_var(hitgroup) = 1) then es_xtell event_var(userid) #multi server_var(wcs_lng)"
+  }
+
+  "27"
+  {
+  "name"        "wcs_lng_s_ankhre"
+  "description" "wcs_lng_s_ankhred"
+  "shortname"   "ankh"
+  "category"    "5"
+  "cost"        "2000"
+  "level"       "0"
+  "dab"         "1"
+  "duration"    "1"
+  "maxamount"   "1"
+  "itemconfig"  "player_death"
+  "cmdbuy"      "es_xset wcs_wa 0;es_xset wcs_wb 0;es playerget primary wcs_wa event_var(userid);es playerget secondary wcs_wb event_var(userid);es_keysetvalue WCSuserdata event_var(userid) wa server_var(wcs_wa);es_keysetvalue WCSuserdata event_var(userid) wb server_var(wcs_wb)"
+  "cmdactivate" "es_keysetvalue WCSuserdata event_var(userid) reincarnation 1"
+  }
+
+  "28"
+  {
+  "name"        "wcs_lng_s_heavyboots"
+  "description" "wcs_lng_s_heavybootsd"
+  "shortname"   "heavyboots"
+  "category"    "1"
+  "cost"        "2000"
+  "level"       "0"
+  "dab"         "1"
+  "duration"    "1"
+  "maxamount"   "2"
+  "itemconfig"  "player_spawn"
+  "shopalias_hb2" "es_keygetvalue wcs_speed WCSuserdata event_var(userid) speed;if (server_var(wcs_speed) = 0) then es_xset wcs_speed 1;es_xmath wcs_speed - 0.3;if (server_var(wcs_speed) <= 0.6) then es_xset wcs_speed 0.6;es playerset speed event_var(userid) server_var(wcs_speed);es_keysetvalue WCSuserdata event_var(userid) speed server_var(wcs_speed)"
+  "shopalias_hb" "es_keygetvalue wcs_gravity WCSuserdata event_var(userid) gravity;if (server_var(wcs_gravity) = 0) then es_xset wcs_gravity 1.0;es_xmath wcs_gravity + 0.2;es wcs gravity event_var(userid) server_var(wcs_gravity);es_keysetvalue WCSuserdata event_var(userid) gravity server_var(wcs_gravity);es playerset healthadd event_var(userid) 50"
+  "cmdbuy"      "shopalias_hb;shopalias_hb2"
+  "cmdactivate" "shopalias_hb;shopalias_hb2"
+  }
+
+  "29"
+  {
+  "name"        "wcs_lng_s_defboots"
+  "description" "wcs_lng_s_defbootsd"
+  "shortname"   "defboots"
+  "category"    "1"
+  "cost"        "200"
+  "level"       "0"
+  "dab"         "1"
+  "duration"    "0"
+  "maxamount"   "0"
+  "itemconfig"  "player_buy"
+  "cmdbuy"      "es wcs_setgravity event_var(userid) 1.0;es_keysetvalue WCSuserdata event_var(userid) gravity 1.0"
+  "cmdactivate" "0"
+  }
+
+  "30"
+  {
+  "name"        "wcs_lng_s_helmview"
+  "description" "wcs_lng_s_helmviewd"
+  "shortname"   "helmview"
+  "category"    "4"
+  "cost"        "2500"
+  "level"       "12"
+  "dab"         "1"
+  "duration"    "1"
+  "maxamount"   "1"
+  "itemconfig"  "player_death"
+  "cmdbuy"      "es_xset wcs_flasheffect 1;es_keysetvalue WCSuserdata event_var(userid) flash_target victim;es_keysetvalue WCSuserdata event_var(userid) flash_duration 0.5;es_keysetvalue WCSuserdata event_var(userid) flash_alpha 150"
+  "cmdactivate" "es_keysetvalue WCSuserdata event_var(userid) flash_target 0;es_keysetvalue WCSuserdata event_var(userid) flash_duration 0;es_keysetvalue WCSuserdata event_var(userid) flash_alpha 0"
+  }
+
+  "31"
+  {
+  "name"        "wcs_lng_s_flashup"
+  "description" "wcs_lng_s_flashupd"
+  "shortname"   "flashup"
+  "category"    "3"
+  "cost"        "3500"
+  "level"       "12"
+  "dab"         "1"
+  "duration"    "1"
+  "maxamount"   "1"
+  "itemconfig"  "player_death"
+  "cmdbuy"      "es_xset wcs_flasheffect 1;es_keysetvalue WCSuserdata event_var(userid) flash_target attacker;es_keysetvalue WCSuserdata event_var(userid) flash_duration 1.3;es_keysetvalue WCSuserdata event_var(userid) flash_alpha 0"
+  "cmdactivate" "es_keysetvalue WCSuserdata event_var(userid) flash_target 0;es_keysetvalue WCSuserdata event_var(userid) flash_duration 0;es_keysetvalue WCSuserdata event_var(userid) flash_alpha 0"
+  }
+
+  // thanks to bobbobagan !
+  "32"
+  {
+  "name"        "wcs_lng_s_longjump"
+  "description" "wcs_lng_s_longjumpd"
+  "shortname"   "longjump"
+  "category"    "5"
+  "cost"        "5000"
+  "level"       "0"
+  "dab"         "1"
+  "duration"    "1"
+  "maxamount"   "1"
+  "itemconfig"  "player_spawn"
+  "cmdbuy"      "es wcsgroup set longjump event_var(userid) 1.2;wcs_getlanguage wcs_lng wcs_lng_r_longjump;es_tell event_var(userid) #multi server_var(wcs_lng)"
+  "cmdactivate" "es wcsgroup set longjump event_var(userid) 1.2;wcs_getlanguage wcs_lng wcs_lng_r_longjump;es_tell event_var(userid) #multi server_var(wcs_lng)"
+  }
+}

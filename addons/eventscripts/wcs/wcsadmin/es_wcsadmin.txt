@@ -1,0 +1,505 @@
+////////////////////////////////////////
+// wcs - Warcraft:Source              //
+// ---------------------------------- //
+//  by kRypT0n!Te                     //
+//      http://wcs.despo-clan.de      //
+// ---------------------------------- //
+////////////////////////////////////////
+// wcs - Warcraft:Source : Orangebox  //
+// ---------------------------------- //
+//  by [Oddity]TeacherCreature        //
+//     http://wcs.warcraft-source.net //
+// ---------------------------------- //
+// Content of this subscript          //
+// - admin menu                       //
+////////////////////////////////////////
+// say commands:
+// wcsadmin
+//
+// admin commands:
+// wcs_admin1_menu <userid>
+// wcs_admin2_menu <userid> <targetid>
+// wcsadmin
+//
+////////////////////////////////////////
+
+block load
+{
+	es_xexists wcs_exists command wcs_admin1_menu
+	if (server_var(wcs_exists) = 0) then es_xregcmd wcs_admin1_menu wcs/wcsadmin/wcs_admin1_menu "wcs_admin1_menu - usage: wcs_admin1_menu <userid>"
+	es_xexists wcs_exists command wcs_admin2_menu
+	if (server_var(wcs_exists) = 0) then es_xregcmd wcs_admin2_menu wcs/wcsadmin/wcs_admin2_menu "wcs_admin2_menu - usage: wcs_admin2_menu <userid> <targetid>"
+	es_xexists wcs_exists command wcs_admin_setting
+	if (server_var(wcs_exists) = 0) then es_xregcmd wcs_admin_setting wcs/wcsadmin/wcs_admin_setting "wcs_admin_setting - usage: wcs_admin_setting <userid>"
+	es_xexists wcs_exists command wcsadmin
+	if (server_var(wcs_exists) = 0) then es_xregsaycmd wcsadmin wcs/wcsadmin/wcs_admincheck "Admin player management"
+	es_xregclientcmd wcsadmin wcs/wcsadmin/wcs_admincheck "Admin player management"
+}
+
+event server
+{
+	// reload the admins - may produce error depending if group exists on server already this is ok!
+	es_xkeygroupdelete "wcsadmin"
+	es_xkeygroupload "wcsadmin" "|wcs/wcsadmin"
+	//es_xformat wcs_admins ""
+	//es_xforeachkey wcs_key in wcsadmin "es_format wcs_admins %1<%2> server_var(wcs_admins) server_var(wcs_key)"
+}
+
+// >>>>>>>>>>>>>>>>> ADMIN STUFF >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+block wcs_admincheck
+{
+	if (server_var(wcs_debug) = "1") then echo wcs_admincheck start
+	// who started the command
+	es_xgetcmduserid wcs_userid
+	es_keygetvalue wcs_id "wcsuserdata" server_var(wcs_userid) "id"
+	// check for admin
+	es_xsetinfo wcs_isadmin "0"
+	es_exists wcs_isadmin key "wcsadmin" server_var(wcs_id)
+	if (server_var(wcs_isadmin) = "1") do
+	{
+		es_exists wcs_exists key "wcsuserdata" server_var(wcs_userid)
+		if (server_var(wcs_exists) = "1") do
+		{
+			es wcs_menuzero server_var(wcs_userid)
+			es wcs_admin1_menu server_var(wcs_userid)
+		}
+	}
+	else do
+	{
+		wcs_getlanguage "wcs_lng" "wcs_lng_noadmin"
+		es_tell server_var(wcs_userid) #multi server_var(wcs_lng)
+	}
+	if (server_var(wcs_debug) = "1") then echo wcs_admincheck end
+}
+
+block wcs_admin1_menu
+{
+	if (server_var(wcs_debug) = "1") then echo wcs_admin1_menu start
+	// a custom command
+	es_xsetinfo wcs_userid 0
+	es_xgetargv wcs_userid 1
+	es_exists wcs_exists userid server_var(wcs_userid)
+	if (server_var(wcs_exists) = 1) do
+	{
+		wcs_getlanguage "wcs_lng" "wcs_lng_selectplayer"
+		es_format wcs_text "%1:\n" server_var(wcs_lng)
+		es_xsetinfo wcs_page 0
+		es_keygetvalue wcs_page "wcsuserdata" server_var(wcs_userid) "page"
+		es_xmath wcs_page + 1
+		es_keysetvalue "wcsuserdata" server_var(wcs_userid) "page" server_var(wcs_page)
+		es_keysetvalue "wcsuserdata" server_var(wcs_userid) "menu" "admin1"
+		es_xsetinfo wcs_upper 6
+		es_xsetinfo wcs_lower 0
+		es_math wcs_upper * server_var(wcs_page)
+		es_xcopy wcs_lower wcs_upper
+		es_xmath wcs_lower - 6
+		es_xsetinfo wcs_counter 1
+		es_xsetinfo wcs_playercount 0
+		es_format wcs_text "%1 %2\n " server_var(wcs_lng_page) server_var(wcs_page)
+		es_foreachkey wcs_key in wcsuserdata "if(server_var(wcs_counter) > server_var(wcs_lower)) then if (server_var(wcs_counter) <= server_var(wcs_upper)) then es_xdoblock wcs/wcsadmin/wcs_admin1_init;es_xmath wcs_counter + 1"
+		wcs_getlanguage "wcs_lng" "wcs_lng_wcssettings"
+		es_format wcs_text "\n %1\n \n->7. %2" server_var(wcs_text) server_var(wcs_lng)
+		if (server_var(wcs_page) > 1) then es_xformat wcs_text "%1\n->8. %2" server_var(wcs_text) server_var(wcs_lng_back)
+		if (server_var(wcs_counter) > server_var(wcs_upper)) then es_xformat wcs_text "%1\n->9. %2" server_var(wcs_text) server_var(wcs_lng_next)
+		es_format wcs_text "%1\n->0. %2" server_var(wcs_text) server_var(wcs_lng_exit)
+		es_strlen wcs_strlen server_var(wcs_text)
+		if (server_var(wcs_strlen) > 1) then es_xmenu 0 server_var(wcs_userid) server_var(wcs_text)
+	}
+	if (server_var(wcs_debug) = "1") then echo wcs_admin1_menu end
+}
+
+block wcs_admin1_init
+{
+	es_exists wcs_exists userid server_var(wcs_key)
+	if (server_var(wcs_exists) = "1") do
+	{
+		es_xmath wcs_playercount + 1
+		es_getplayername wcs_name server_var(wcs_key)
+		es_keygetvalue wcs_race "wcsuserdata" server_var(wcs_key) "race"
+		es_keygetvalue wcs_level "wcsuserdata" server_var(wcs_key) "level"
+		wcs_getlanguage "wcs_lng" "wcs_lng_level"
+		es_format wcs_text "%1\n->%2. %3 (%4 %5)" server_var(wcs_text) server_var(wcs_playercount) server_var(wcs_name) server_var(wcs_lng) server_var(wcs_level)
+	}
+}
+
+block wcs_admin1_handle
+{
+	if (server_var(wcs_debug) = "1") then echo wcs_admin1_handle start
+	// handle admin menu commands
+	es_xsetinfo wcs_page 0
+	es_keygetvalue wcs_page "wcsuserdata" event_var(userid) "page"
+	// reset the menu
+	es_keysetvalue "wcsuserdata" event_var(userid) "menu" "0"
+	// handle back
+	if (event_var(commandstring) = "8") do
+	{
+		if (server_var(wcs_page) > 1) do
+		{
+			es_xmath wcs_page - 2
+			es_keysetvalue wcsuserdata event_var(userid) page server_var(wcs_page)
+			es wcs_admin1_menu event_var(userid)
+		}
+	}
+	// handle next
+	if (event_var(commandstring) = "9") do
+	{
+		es_xsetinfo wcs_next 0
+		es_xgetplayercount wcs_playercount
+		es_xcopy wcs_tmp wcs_page
+		es_xmath wcs_tmp * 6
+		if (server_var(wcs_playercount) > server_var(wcs_tmp)) do
+		{
+			es_xmath wcs_page + 1
+			es wcs_admin1_menu event_var(userid)
+		}
+	}
+	// handle settings
+	if (event_var(commandstring) = "7") do
+	{
+		es_keygetvalue wcs_id "wcsuserdata" event_var(userid) "id"
+		es_xsetinfo wcs_isadmin "0"
+		es_exists wcs_exists key "wcsadmin" server_var(wcs_id)
+		if (server_var(wcs_exists) = "1") then es_xkeygetvalue wcs_isadmin "wcsadmin" server_var(wcs_id) "script_settings"
+		if (server_var(wcs_isadmin) = "1") do
+		{
+			es wcs_admin_setting event_var(userid)
+		}
+		else do
+		{
+			wcs_getlanguage "wcs_lng" "wcs_lng_noright"
+			es_tell event_var(userid) #multi server_var(wcs_lng)
+		}
+	}
+	if (event_var(commandstring) < 7) do
+	{
+		if (event_var(commandstring) > 0) do
+		{
+			es_xcopy wcs_target wcs_page
+			es_xmath wcs_target * 6
+			es_xmath wcs_target - 6
+			es_math wcs_target + event_var(commandstring)
+			es_xsetinfo wcs_scounter 1
+			es_xforeachkey wcs_key in "wcsuserdata" "if (server_var(wcs_target) = server_var(wcs_scounter)) then wcs_admin2_menu event_var(userid) server_var(wcs_key);es_xmath wcs_scounter + 1"
+		}
+	}
+	if (server_var(wcs_debug) = "1") then echo wcs_admin1_handle end
+}
+
+block wcs_admin2_menu
+{
+	if (server_var(wcs_debug) = "1") then echo wcs_admin2_menu start
+	// a custom command
+	es_xsetinfo wcs_userid 0
+	es_xgetargv wcs_userid 1
+	es_xsetinfo wcs_targetid 0
+	es_xgetargv wcs_targetid 2
+	es_exists wcs_exists userid server_var(wcs_userid)
+	if (server_var(wcs_exists) = 1) do
+	{
+		es_exists wcs_exists userid server_var(wcs_targetid)
+		if (server_var(wcs_exists) = 1) do
+		{
+			es_keygetvalue wcs_id "wcsuserdata" server_var(wcs_targetid) "id"
+			es_getplayername wcs_name server_var(wcs_targetid)
+			wcs_getlanguage "wcs_lng" "wcs_lng_adminmenu2"
+			es_format wcs_text "%1\n  %2\n \n %3\n 8. %4\n \n 0. %5" server_var(wcs_id) server_var(wcs_name) server_var(wcs_lng) server_var(wcs_lng_back) server_var(wcs_lng_exit)
+			es_menu "0" server_var(wcs_userid) server_var(wcs_text)
+			es_keysetvalue wcsuserdata server_var(wcs_userid) "targetid" server_var(wcs_targetid)
+			es_keysetvalue wcsuserdata server_var(wcs_userid) "menu" "admin2"
+		}
+	}
+	if (server_var(wcs_debug) = "1") then echo wcs_admin2_menu end
+}
+
+block wcs_admin2_handle
+{
+	if (server_var(wcs_debug) = "1") then echo wcs_admin2_handle start
+	es_xsetinfo wcs_targetid 0
+	es_keygetvalue wcs_targetid "wcsuserdata" event_var(userid) "targetid"
+	es_getplayername wcs_name event_var(userid)
+	es_xsetinfo wcs_tmp2 0
+	if (server_var(wcs_targetid) != 0) then es_xgetplayername wcs_tmp2 server_var(wcs_targetid)
+	es echo [wcsadmin] : server_var(wcs_name) used admin menu, pressed key event_var(commandstring) target: server_var(wcs_tmp2)
+	es_keygetvalue wcs_sid "wcsuserdata" event_var(userid) "id"
+	// reset the menu
+	es_keysetvalue "wcsuserdata" event_var(userid) "menu" "0"
+	// execute the levelup from the admin menu
+	es_exists wcs_exists userid server_var(wcs_targetid)
+	if (server_var(wcs_exists) = 1) do
+	{
+		// get the ID
+		es_keygetvalue wcs_id wcsuserdata server_var(wcs_targetid) "id"
+		es_xsetinfo wcs_name 0
+		es_getplayername wcs_name server_var(wcs_targetid)
+		// the admin numbers
+		if (event_var(commandstring) = "1") do
+		{
+			es_keygetvalue wcs_isadmin "wcsadmin" server_var(wcs_sid) "give_xp_level"
+			if (server_var(wcs_isadmin) = "1") do
+			{
+				wcs_getlanguage "wcs_lng" "wcs_lng_admin_givexp"
+				es_format wcs_text server_var(wcs_lng) event_var(es_username) server_var(wcs_name) "200"
+				es_tell server_var(wcs_targetid) #multi server_var(wcs_text)
+				if (server_var(wcs_targetid) != event_var(userid)) then es_xtell event_var(userid) #multi server_var(wcs_text)
+				es wcs_givexp server_var(wcs_targetid) "200" "0" "1"
+				es wcs_admin2_menu event_var(userid) server_var(wcs_targetid)
+			}
+			else do
+			{
+				wcs_getlanguage "wcs_lng" "wcs_lng_noright"
+				es_tell event_var(userid) #multi server_var(wcs_lng)
+			}
+		}
+		if (event_var(commandstring) = "2") do
+		{
+			es_keygetvalue wcs_isadmin "wcsadmin" server_var(wcs_sid) "give_xp_level"
+			if (server_var(wcs_isadmin) = "1") do
+			{
+				wcs_getlanguage "wcs_lng" "wcs_lng_admin_givexp"
+				es_format wcs_text server_var(wcs_lng) event_var(es_username) server_var(wcs_name) "1000"
+				es_tell server_var(wcs_targetid) #multi server_var(wcs_text)
+				if (server_var(wcs_targetid) != event_var(userid)) then es_xtell event_var(userid) #multi server_var(wcs_text)
+				es wcs_givexp server_var(wcs_targetid) "1000" "0" "1"
+				es wcs_admin2_menu event_var(userid) server_var(wcs_targetid)
+			}
+			else do
+			{
+				wcs_getlanguage "wcs_lng" "wcs_lng_noright"
+				es_tell event_var(userid) #multi server_var(wcs_lng)
+			}
+		}
+		if (event_var(commandstring) = "3") do
+		{
+			es_keygetvalue wcs_isadmin "wcsadmin" server_var(wcs_sid) "give_xp_level"
+			if (server_var(wcs_isadmin) = "1") do
+			{
+				wcs_getlanguage "wcs_lng" "wcs_lng_admin_givelevel"
+				es_format wcs_text server_var(wcs_lng) event_var(es_username) server_var(wcs_name) "2"
+				es_tell server_var(wcs_targetid) #multi server_var(wcs_text)
+				if (server_var(wcs_targetid) != event_var(userid)) then es_xtell event_var(userid) #multi server_var(wcs_text)
+				es wcs_givelevel server_var(wcs_targetid) "2" "0" "1"
+				es wcs_admin2_menu event_var(userid) server_var(wcs_targetid)
+			}
+			else do
+			{
+				wcs_getlanguage "wcs_lng" "wcs_lng_noright"
+				es_tell event_var(userid) #multi server_var(wcs_lng)
+			}
+		}
+		if (event_var(commandstring) = "4") do
+		{
+			es_keygetvalue wcs_isadmin "wcsadmin" server_var(wcs_sid) "take_level"
+			if (server_var(wcs_isadmin) = "1") do
+			{
+				// set player one level lower
+				es_keygetvalue wcs_level "wcsuserdata" server_var(wcs_targetid) "level"
+				if (server_var(wcs_level) > 0) do
+				{
+					es_keygetvalue wcs_race "wcsuserdata" server_var(wcs_targetid) "race"
+					es_keygetvalue wcs_total_level "wcsuserdata" server_var(wcs_targetid) "total_level"
+					es_xsetinfo wcs_counter "0"
+					es_keygetvalue wcs_numberofskills "wcsraces" server_var(wcs_race) "numberofskills"
+					if (server_var(wcs_numberofskills) != "0") then while "server_var(wcs_counter) <= server_var(wcs_numberofskills)" "es_format wcs_skillnumber skill_%1 server_var(wcs_counter);es_keysetvalue wcsuserdata server_var(wcs_targetid) server_var(wcs_skillnumber) 0;es_xmath wcs_counter + 1"
+					es_xmath wcs_level - 1
+					es_xmath wcs_total_level - 1
+					es_keysetvalue "wcsuserdata" server_var(wcs_targetid) "xp" "0"
+					es_keysetvalue "wcsuserdata" server_var(wcs_targetid) "level" server_var(wcs_level)
+					es_keysetvalue "wcsuserdata" server_var(wcs_targetid) "total_level" server_var(wcs_total_level)
+					es_keysetvalue "wcsuserdata" server_var(wcs_targetid) "unused" server_var(wcs_level)
+					wcs_getlanguage "wcs_lng" "wcs_lng_admin_takelevel"
+					es_format wcs_text server_var(wcs_lng) event_var(es_username) "1" server_var(wcs_name)
+					es_tell server_var(wcs_targetid) #multi server_var(wcs_text)
+					if (server_var(wcs_targetid) != event_var(userid)) then es_xtell event_var(userid) #multi server_var(wcs_text)
+					es wcs_saveplayer server_var(wcs_targetid)
+					es_keysetvalue "wcsuserdata" server_var(wcs_targetid) "skillcheck" "1"
+					es wcs_admin2_menu event_var(userid) server_var(wcs_targetid)
+				}
+			}
+			else do
+			{
+				wcs_getlanguage "wcs_lng" "wcs_lng_noright"
+				es_tell event_var(userid) #multi server_var(wcs_lng)
+			}
+		}
+		if (event_var(commandstring) = "5") do
+		{
+			es_keygetvalue wcs_isadmin "wcsadmin" server_var(wcs_sid) "give_money"
+			if (server_var(wcs_isadmin) = "1") do
+			{
+				wcs_getlanguage "wcs_lng" "wcs_lng_admin_givecash"
+				es_format wcs_text server_var(wcs_lng) event_var(es_username) server_var(wcs_name) "5000"
+				if (server_var(wcs_game) = server_var(wcs_game_css)) then playerset cashadd server_var(wcs_targetid) 5000
+				if (server_var(wcs_game) != server_var(wcs_game_css)) then wcs_givecredits server_var(wcs_targetid) "5000" server_var(wcs_text) "1"
+				if (server_var(wcs_targetid) != event_var(userid)) then es_xtell event_var(userid) #multi server_var(wcs_text)
+				es_tell server_var(wcs_targetid) #multi server_var(wcs_text)
+				es wcs_admin2_menu event_var(userid) server_var(wcs_targetid)
+			}
+			else do
+			{
+				wcs_getlanguage "wcs_lng" "wcs_lng_noright"
+				es_tell event_var(userid) #multi server_var(wcs_lng)
+			}
+		}
+		if (event_var(commandstring) = "6") do
+		{
+			es_keygetvalue wcs_isadmin "wcsadmin" server_var(wcs_sid) "reset_player"
+			if (server_var(wcs_isadmin) = "1") do
+			{
+				es_keygetvalue wcs_tmp "wcsuserdata" event_var(userid) "confirm"
+				if (server_var(wcs_tmp) = "0") do
+				{
+					wcs_getlanguage "wcs_lng" "wcs_lng_adminagain"
+					es_tell event_var(userid) #multi server_var(wcs_lng)
+					es_keysetvalue "wcsuserdata" event_var(userid) "confirm" "1"
+					es wcs_admin2_menu event_var(userid) server_var(wcs_targetid)
+				}
+				else do
+				{
+					es_keygetvalue wcs_race "wcsuserdata" server_var(wcs_targetid) "race"
+					es_xsetinfo wcs_counter "0"
+					es_keygetvalue wcs_level "wcsuserdata" server_var(wcs_targetid) "level"
+					es_keygetvalue wcs_total_level "wcsuserdata" server_var(wcs_targetid) "total_level"
+					es_math wcs_total_level - server_var(wcs_level)
+					es_keygetvalue wcs_numberofskills "wcsraces" server_var(wcs_race) "numberofskills"
+					if (server_var(wcs_numberofskills) != "0") then while "server_var(wcs_counter) <= server_var(wcs_numberofskills)" "es_format wcs_skillnumber skill_%1 server_var(wcs_counter);es_keysetvalue wcsuserdata server_var(wcs_targetid) server_var(wcs_skillnumber) 0;es_xmath wcs_counter + 1"
+					es_keysetvalue "wcsuserdata" server_var(wcs_targetid) "xp" "0"
+					es_keysetvalue "wcsuserdata" server_var(wcs_targetid) "level" "0"
+					es_keysetvalue "wcsuserdata" server_var(wcs_targetid) "unused" "0"
+					es_keysetvalue "wcsuserdata" server_var(wcs_targetid) "total_level" server_var(wcs_total_level)
+					es wcs_saveplayer server_var(wcs_targetid)
+					wcs_getlanguage "wcs_lng" "wcs_lng_playerreset"
+					es_tell server_var(wcs_targetid) #multi server_var(wcs_lng)
+					wcs_getlanguage "wcs_lng" "wcs_lng_youerased"
+					wcs_getlanguage "wcs_lng2" "wcs_lng_skills"
+					wcs_getlanguage "wcs_lng3" "wcs_lng_level"
+					es_format wcs_text "#lightgreen%1 #green%2 's #lightgreenXP, %3, %4." server_var(wcs_lng) server_var(wcs_name) server_var(wcs_lng2) server_var(wcs_lng3)
+					es_tell event_var(userid) #multi server_var(wcs_text)
+					es_keysetvalue "wcsuserdata" server_var(wcs_targetid) "skillcheck" "1"
+				}
+			}
+			else do
+			{
+				wcs_getlanguage "wcs_lng" "wcs_lng_noright"
+				es_tell event_var(userid) #multi server_var(wcs_lng)
+			}
+		}
+		if (event_var(commandstring) = "7") do
+		{
+			es_keygetvalue wcs_isadmin "wcsadmin" server_var(wcs_sid) "reset_player"
+			if (server_var(wcs_isadmin) = "1") do
+			{
+				es_keygetvalue wcs_tmp "wcsuserdata" event_var(userid) "confirm"
+				if (server_var(wcs_tmp) = "0") do
+				{
+					wcs_getlanguage "wcs_lng" "wcs_lng_adminagain"
+					es_tell event_var(userid) #multi server_var(wcs_lng)
+					es_keysetvalue "wcsuserdata" event_var(userid) "confirm" "1"
+					es wcs_admin2_menu event_var(userid) server_var(wcs_targetid)
+				}
+				else do
+				{
+					// get user id
+					es_keygetvalue wcs_id "wcsuserdata" server_var(wcs_targetid) "id"
+					es_keydelete "wcsuserdata" server_var(wcs_targetid)
+					es_keycreate wcsuserdata server_var(wcs_targetid)
+					es_keydelete wcsusers server_var(wcs_id)
+					es_keycreate wcsusers server_var(wcs_id)
+					es_xdoblock wcs/wcsfunctions/wcs_playercheck
+					es_keysetvalue wcsuserdata server_var(wcs_targetid) "id" server_var(wcs_id)
+					es_keysetvalue wcsuserdata server_var(wcs_targetid) "race" "1"
+					es_keysetvalue wcsuserdata server_var(wcs_targetid) "level" "0"
+					es_keysetvalue wcsuserdata server_var(wcs_targetid) "total_level" "0"
+					es_keysetvalue wcsuserdata server_var(wcs_targetid) "xp" "0"
+					es_keysetvalue wcsuserdata server_var(wcs_targetid) "unused" "0"
+					wcs_getlanguage "wcs_lng" "wcs_lng_playerreset"
+					es_tell server_var(wcs_targetid) #multi server_var(wcs_lng)
+					wcs_getlanguage "wcs_lng" "wcs_lng_youerased"
+					wcs_getlanguage "wcs_lng2" "wcs_lng_skills"
+					wcs_getlanguage "wcs_lng3" "wcs_lng_level"
+					es_format wcs_text "#lightgreen%1 #green%2 's #lightgreenXP, %3, %4." server_var(wcs_lng) server_var(wcs_name) server_var(wcs_lng2) server_var(wcs_lng3)
+					es_tell event_var(userid) #multi server_var(wcs_text)
+					es_keysetvalue "wcsuserdata" server_var(wcs_targetid) "skillcheck" "1"
+				}
+			}
+			else do
+			{
+				wcs_getlanguage "wcs_lng" "wcs_lng_noright"
+				es_tell event_var(userid) #multi server_var(wcs_lng)
+			}
+		}
+		// handle 'back'
+		es_xsetinfo wcs_page 0
+		if (event_var(commandstring) = "8") do
+		{
+			es_keygetvalue wcs_page "wcsuserdata" event_var(userid) "page"
+			es_xmath wcs_page - 1
+			es_keysetvalue "wcsuserdata" event_var(userid) "page" server_var(wcs_page)
+			es wcs_admin1_menu event_var(userid)
+		}
+	}
+	if (server_var(wcs_debug) = "1") then echo wcs_admin2_handle end
+}
+// <<<<<<<<<<<<<<<<< END ADMIN STUFF <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+block wcs_admin_setting
+{
+	es_xsetinfo wcs_userid 0
+	es_xgetargv wcs_userid 1
+	es_exists wcs_exists userid server_var(wcs_userid)
+	if (server_var(wcs_exists) = 1) do
+	{
+		es_keysetvalue "wcsuserdata" event_var(userid) "page" "0"
+		es_keysetvalue "wcsuserdata" event_var(userid) "menu" "admin3"
+		wcs_getlanguage "wcs_lng" "wcs_lng_adminmenu_setting"
+		es_format wcs_lng server_var(wcs_lng) server_var(mp_friendlyfire)
+		es_menu "0" server_var(wcs_userid) server_var(wcs_lng)
+	}
+}
+
+block wcs_admin_setting_handling
+{
+	if (server_var(wcs_debug) = "1") then echo wcs_admin_setting_handle start
+	es wcs_menuzero event_var(userid)
+	if (event_var(commandstring) = "1") do
+	{
+		wcs_getlanguage "wcs_lng" "wcs_lng_adminallxp_p"
+		es_xforeachkey wcs_key in "wcsuserdata" "es wcs_givexp server_var(wcs_key) 500 server_var(wcs_lng) 1"
+		wcs_getlanguage "wcs_lng" "wcs_lng_adminallxp"
+		es_msg #multi server_var(wcs_lng)
+	}
+	if (event_var(commandstring) = "2") do
+	{
+		wcs_cleartop10
+		wcs_getlanguage "wcs_lng" "wcs_lng_cleartop10"
+		es_msg #multi server_var(wcs_lng)
+	}
+	if (event_var(commandstring) = "3") do
+	{
+		if (server_var(mp_friendlyfire) = "0") do
+		{
+			mp_friendlyfire "1"
+		}
+		else do
+		{
+			mp_friendlyfire "0"
+		}
+		wcs_getlanguage "wcs_lng" "wcs_lng_changedff"
+		es_msg #multi server_var(wcs_lng)
+		es_xsetinfo wcs_adminff "1"
+	}
+	if (event_var(commandstring) = "4") do
+	{
+		wcs_getlanguage "wcs_lng" "wcs_lng_modunload"
+		es_msg #multi server_var(wcs_lng)
+		es_xdelayed 2 es_xunload wcs
+	}
+	if (event_var(commandstring) = "5") do
+	{
+		wcs_getlanguage "wcs_lng" "wcs_lng_modreload"
+		es_msg #multi server_var(wcs_lng)
+		if (server_var(wcs_game) = server_var(wcs_game_css)) then es_xdelayed 15 changelevel de_dust2
+		if (server_var(wcs_game) = server_var(wcs_game_dods)) then es_xdelayed 15 changelevel dod_flash
+		wcs_reload "all"
+	}
+	if (server_var(wcs_debug) = "1") then echo wcs_admin_setting_handle end
+}

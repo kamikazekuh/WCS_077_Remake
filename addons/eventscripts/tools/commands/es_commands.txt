@@ -1,0 +1,65 @@
+block load
+{
+	es_xset wcs_arg1 0
+	es_xset wcs_arg2 0
+	es_xset wcs_arg3 0
+	es_xset wcs_skillnmb 0
+	es_xset wcs_lvlnmb 0
+	es_xexists wcs_exists command wcs_getinfo
+	if (server_var(wcs_exists) = 0) then es_regcmd "wcs_getinfo" "tools/commands/getinfo" "wcs_getinfo <info> <var> <userid>"
+	es_xset wcs_getinfo_args "name;restrictteam;restrictitem;numberofskills;numberoflevels;maxlevel"
+}
+
+
+block getinfo
+{
+	es_getargv wcs_arg1 1
+	if (server_var(wcs_arg1) in server_var(wcs_getinfo_args)) do
+	{
+		es_getargv wcs_arg2 2
+		es_getargv wcs_arg3 3
+		es_exists wcs_tmp key wcsuserdata server_var(wcs_arg3)
+		if (server_var(wcs_tmp) == 1) do
+		{
+			if (server_var(wcs_arg1) == name) do
+			{
+				es_keygetvalue wcs_race "wcsuserdata" server_var(wcs_arg3) "race"
+				es_keygetvalue wcs_racename "wcsraces" server_var(wcs_race) "name"
+				es_set server_var(wcs_arg2) server_var(wcs_racename)
+			}
+			if (server_var(wcs_arg1) == restrictteam) do
+			{
+				
+				es_keygetvalue wcs_race "wcsuserdata" server_var(wcs_arg3) "race"
+				es_keygetvalue wcs_racename "wcsraces" server_var(wcs_race) "restrictteam"
+				es_set server_var(wcs_arg2) server_var(wcs_racename)			
+			}
+			if (server_var(wcs_arg1) == restrictitem) do
+			{
+				es_keygetvalue wcs_race "wcsuserdata" server_var(wcs_arg3) "race"
+				es_keygetvalue wcs_racename "wcsraces" server_var(wcs_race) "restrictitem"
+				es_set server_var(wcs_arg2) server_var(wcs_racename)		
+			}
+			if (server_var(wcs_arg1) == numberofskills) do
+			{
+				es_keygetvalue wcs_race "wcsuserdata" server_var(wcs_arg3) "race"
+				es_keygetvalue wcs_racename "wcsraces" server_var(wcs_race) "numberofskills"
+				es_set server_var(wcs_arg2) server_var(wcs_racename)		
+			}
+			if (server_var(wcs_arg1) == numberoflevels) do
+			{
+				es_keygetvalue wcs_race "wcsuserdata" server_var(wcs_arg3) "race"
+				es_keygetvalue wcs_racename "wcsraces" server_var(wcs_race) "numberoflevels"
+				es_set server_var(wcs_arg2) server_var(wcs_racename)		
+			}
+			if (server_var(wcs_arg1) == maxlevel) do
+			{
+				es_keygetvalue wcs_race "wcsuserdata" server_var(wcs_arg3) "race"
+				es_keygetvalue wcs_skillnmb "wcsraces" server_var(wcs_race) "numberofskills"
+				es_keygetvalue wcs_lvlnmb "wcsraces" server_var(wcs_race) "numberoflevels"
+				es_math wcs_skillnmb * server_var(wcs_lvlnmb)
+				es_set server_var(wcs_arg2) server_var(wcs_skillnmb)		
+			}
+		}
+	}
+}

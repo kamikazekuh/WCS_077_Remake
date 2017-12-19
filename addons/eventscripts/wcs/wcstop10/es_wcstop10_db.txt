@@ -1,0 +1,83 @@
+"wcstop10"
+{
+	"1"
+	{
+		"name"		":kami:"
+		"steamid"		"STEAM_0:1:8770268"
+		"level"		"149"
+		"curlevel"		"5"
+		"currace"		"2"
+	}
+	"9"
+	{
+		"name"		"Keith"
+		"steamid"		"BOT_KEITH"
+		"level"		"49"
+		"curlevel"		"49"
+		"currace"		"2"
+	}
+	"3"
+	{
+		"name"		"Jerry"
+		"steamid"		"BOT_JERRY"
+		"level"		"57"
+		"curlevel"		"57"
+		"currace"		"3"
+	}
+	"8"
+	{
+		"name"		"Erik"
+		"steamid"		"BOT_ERIK"
+		"level"		"49"
+		"curlevel"		"49"
+		"currace"		"4"
+	}
+	"5"
+	{
+		"name"		"Dan"
+		"steamid"		"BOT_DAN"
+		"level"		"52"
+		"curlevel"		"52"
+		"currace"		"3"
+	}
+	"4"
+	{
+		"name"		"Eric"
+		"steamid"		"BOT_ERIC"
+		"level"		"54"
+		"curlevel"		"54"
+		"currace"		"1"
+	}
+	"6"
+	{
+		"name"		"Nate"
+		"steamid"		"BOT_NATE"
+		"level"		"51"
+		"curlevel"		"51"
+		"currace"		"4"
+	}
+	"7"
+	{
+		"name"		"Derek"
+		"steamid"		"BOT_DEREK"
+		"level"		"49"
+		"curlevel"		"49"
+		"currace"		"1"
+	}
+	"10"
+	{
+		"name"		"Pat"
+		"steamid"		"BOT_PAT"
+		"level"		"42"
+		"curlevel"		"42"
+		"currace"		"3"
+	}
+	"2"
+	{
+		"name"		"kami."
+		"steamid"		"[U:1:17540537]"
+		"level"		"55"
+		"curlevel"		"10"
+		"currace"		"2"
+	}
+}

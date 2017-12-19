@@ -1,0 +1,526 @@
+////////////////////////////////////////
+// wcs - Warcraft:Source              //
+// ---------------------------------- //
+//  by kRypT0n!Te                     //
+//      http://wcs.despo-clan.de      //
+// ---------------------------------- //
+////////////////////////////////////////
+// wcs - Warcraft:Source : Orangebox  //
+// ---------------------------------- //
+//  by [Oddity]TeacherCreature        //
+//     http://wcs.warcraft-source.net //
+// ---------------------------------- //
+// Content of this subscript          //
+// - shop management                  //
+////////////////////////////////////////
+// say commands:
+// shopmenu, shopinfo
+//
+// admin commands:
+// wcs_shop_menu <userid>
+// wcs_shop_menu2 <userid> <category>
+// wcs_giveshopitem <userid> <itemid>
+// wcs_showshopinfo <userid>
+//
+////////////////////////////////////////
+
+block load
+{
+	// Change this, if you add a new shopmenu category (also change the language file wcs_lng_shopcats)
+	es_xset wcs_numberoficats "5"
+	es_xexists wcs_exists keygroup "wcsinfo"
+	if (server_var(wcs_exists) = 0) then es_xkeygroupcreate wcsinfo
+	es_xexists wcs_exists key "wcsinfo" "shopinfo"
+	if (server_var(wcs_exists) = 0) do
+	{
+		es_xkeycreate "wcsinfo" "shopinfo"
+	}
+	es_xelse do
+	{
+		es_xkeydelete "wcsinfo" "shopinfo"
+		es_xkeycreate "wcsinfo" "shopinfo"
+	}
+	es_xkeygroupload "wcsshop" "|wcs/wcsshop"
+	alias wcs_checkshopalias "if (shopalias in server_var(wcs_val)) then es_xkeygetvalue wcs_tmp wcsshop server_var(wcs_key) server_var(wcs_val);if (shopalias in server_var(wcs_val)) then alias server_var(wcs_val) server_var(wcs_tmp)"
+	alias wcs_checkshoplanguage "if (wcs_lng_s in server_var(wcs_name)) then wcs_getlanguage wcs_name server_var(wcs_name);es_keysetvalue wcsshop server_var(wcs_key) name server_var(wcs_name);es_keygetvalue wcs_descr wcsshop server_var(wcs_key) description;if (wcs_lng_s in server_var(wcs_descr)) then wcs_getlanguage wcs_descr server_var(wcs_descr);es_keysetvalue wcsshop server_var(wcs_key) description server_var(wcs_descr)"
+	es_xset wcs_numberofitems "0"
+	es_xforeachkey wcs_key in "wcsshop" "es_keygetvalue wcs_name wcsshop server_var(wcs_key) name;es_foreachval wcs_val in wcsshop server_var(wcs_key) wcs_checkshopalias;wcs_checkshoplanguage;es echo [wcs] Loaded: server_var(wcs_name);es_xmath wcs_numberofitems + 1"
+	es echo "[wcs] Total : " server_var(wcs_numberofitems) " Items loaded"
+	// create the shopinfo data
+	es_xdoblock wcs/wcsshop/wcs_shopinfo
+	es_xexists wcs_exists command wcs_shop_menu
+	if (server_var(wcs_exists) = 0) then es_xregcmd wcs_shop_menu wcs/wcsshop/wcs_shop_menu "wcs_shop_menu - usage: wcs_shop_menu <userid>"
+	es_xexists wcs_exists command wcs_shop_menu2
+	if (server_var(wcs_exists) = 0) then es_xregcmd wcs_shop_menu2 wcs/wcsshop/wcs_shop_menu2 "wcs_shop_menu2 - usage: wcs_shop_menu2 <userid> <category>"
+	es_xexists wcs_exists command wcs_giveshopitem
+	if (server_var(wcs_exists) = 0) then es_xregcmd wcs_giveshopitem wcs/wcsshop/wcs_giveshopitem "wcs_giveshopitem - usage: wcs_giveshopitem <userid> <itemid>"
+	es_xexists wcs_exists command wcs_showshopinfo
+	if (server_var(wcs_exists) = 0) then es_xregcmd wcs_showshopinfo wcs/wcsshop/wcs_showshopinfo "Shows detail info about the shop items"
+	es_xexists wcs_exists command shopmenu
+	if (server_var(wcs_exists) = 0) then es_xregsaycmd shopmenu wcs/wcsshop/wcs_shopmenu "Opens the shopmenu"
+	es_xexists wcs_exists command shopinfo
+	if (server_var(wcs_exists) = 0) then es_xregsaycmd shopinfo wcs/wcsshop/wcs_showshopinfo "Shows detail info about the shop items"
+}
+
+block unload
+{
+	es_xkeygroupdelete "wcsshop"
+	es_xkeydelete "wcsinfo" "shopinfo"
+}
+
+// >>>>>>>>>>>>>>>>> BEGIN SHOP BLOCKS >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+block wcs_shopmenu
+{
+	if (server_var(wcs_debug) = "1") then echo wcs_shopmenu start
+	// who runned the command ?
+	es_xgetcmduserid wcs_userid
+	es_exists wcs_exists userid server_var(wcs_userid)
+	if (server_var(wcs_exists) = "1") do
+	{
+		if (server_var(wcs_cfg_noshopmenu) = "1") then es_xset wcs_exists 0
+		if (server_var(wcs_game) = server_var(wcs_game_dods)) then es_xif (server_var(wcs_cfg_dods_noshopmenu) = "1") then es_xset wcs_exists 0
+		if (server_var(wcs_exists) = "0") do
+		{
+			wcs_getlanguage "wcs_lng" "wcs_lng_noshopmenu"
+			es_tell server_var(wcs_userid) #multi server_var(wcs_lng)
+			es_xset wcs_exists 0
+		}
+	}
+	es_xelse do
+	{
+		es_xset wcs_exists 0
+	}
+	if (server_var(wcs_exists) = "1") do
+	{
+		es wcs_menuzero server_var(wcs_userid)
+		if (server_var(wcs_game) = server_var(wcs_game_dods)) then wcs_showcredits server_var(wcs_userid)
+		es wcs_shop_menu server_var(wcs_userid)
+	}
+	if (server_var(wcs_debug) = "1") then echo wcs_shopmenu end
+}
+
+block wcs_shop_menu
+{
+	if (server_var(wcs_debug) = "1") then echo wcs_shop_menu start
+	// a custom command
+	es_xgetargv wcs_userid 1
+	es_xexists wcs_exists keygroup "wcsshop"
+	if (server_var(wcs_exists) = 1) do
+	{
+		es_keysetvalue "wcsuserdata" server_var(wcs_userid) "menu" "shop1"
+		es_keysetvalue "wcsuserdata" server_var(wcs_userid) "page" "1"
+		wcs_getlanguage "wcs_lng" "wcs_lng_choosecat"
+		es_format wcs_text "%1 :\n " server_var(wcs_lng)
+		es_xset wcs_counter 1
+		wcs_getlanguage "wcs_lng" "wcs_lng_shopcats"
+		es_xset wcs_format "%1\n->%2. %3"
+		while "server_var(wcs_counter) <= server_var(wcs_numberoficats)" "es_token wcs_tmp server_var(wcs_lng) server_var(wcs_counter) |;es_format wcs_text server_var(wcs_format) server_var(wcs_text) server_var(wcs_counter) server_var(wcs_tmp);es_xmath wcs_counter + 1"
+		// check if we need next page
+		wcs_getlanguage "wcs_lng" "wcs_lng_shopmenuhint"
+		es_format wcs_text "\n %1 \n \n%2\n \n0. %3" server_var(wcs_text) server_var(wcs_lng) server_var(wcs_lng_exit)
+		es_menu 0 server_var(wcs_userid) server_var(wcs_text)
+	}
+	if (server_var(wcs_debug) = "1") then echo wcs_shop_menu end
+}
+
+block wcs_shop_menu2
+{
+	if (server_var(wcs_debug) = "1") then echo wcs_shop_menu2 start
+	// a custom command
+	es_xgetargv wcs_userid 1
+	es_xgetargv wcs_page 2
+	es_exists wcs_exists key "wcsuserdata" server_var(wcs_userid)
+	if (server_var(wcs_page) < 1) then es_xset wcs_exists 0
+	if (server_var(wcs_page) > server_var(wcs_numberoficats)) then es_xset wcs_exists 0
+	if (server_var(wcs_exists) = 1) do
+	{
+		es_keysetvalue wcsuserdata server_var(wcs_userid) "page" server_var(wcs_page)
+		es_keysetvalue wcsuserdata server_var(wcs_userid) "menu" "shop2"
+		// get the money (for DOD:S special handling)
+		es_xset wcs_money 0
+		if (server_var(wcs_game) = server_var(wcs_game_css)) then es_xgetmoney wcs_money server_var(wcs_userid)
+		if (server_var(wcs_game) != server_var(wcs_game_css)) then es_xkeygetvalue wcs_money "wcsuserdata" server_var(wcs_userid) "credits"
+		// get the level
+		es_keygetvalue wcs_level wcsuserdata server_var(wcs_userid) "level"
+		// check dead or alive status
+		es_xset wcs_dead "1"
+		es_getplayerprop wcs_dead server_var(wcs_userid) "CCSPlayer.baseclass.pl.deadflag"
+		if (server_var(wcs_dead) = "0") then es_xset wcs_deadoralive "1"
+		if (server_var(wcs_dead) = "1") then es_xset wcs_deadoralive "0"
+		wcs_getlanguage "wcs_lng" "wcs_lng_chooseitem"
+		es_format wcs_text "%1 :\n " server_var(wcs_lng)
+		es_xset wcs_counter 1
+		es_xset wcs_key 0
+		es_xforeachkey wcs_key in wcsshop "es_keygetvalue wcs_category wcsshop server_var(wcs_key) category;if (server_var(wcs_category) = server_var(wcs_page)) then es_xdoblock wcs/wcsshop/wcs_shop_menu_init"
+		es_format wcs_text "%1\n \n0. %2" server_var(wcs_text) server_var(wcs_lng_back)
+		es_menu 0 server_var(wcs_userid) server_var(wcs_text)
+	}
+	if (server_var(wcs_debug) = "1") then echo wcs_shop_menu2 end
+}
+
+block wcs_shop_menu_init
+{
+	if (server_var(wcs_debug) = "1") then echo wcs_shop_menu_init start
+	es_keygetvalue wcs_iname wcsshop server_var(wcs_key) "name"
+	// check if user can buy item
+	es_keygetvalue wcs_icost wcsshop server_var(wcs_key) "cost"
+	es_keygetvalue wcs_ilevel wcsshop server_var(wcs_key) "level"
+	es_keygetvalue wcs_idab wcsshop server_var(wcs_key) "dab"
+	es_keygetvalue wcs_amount "wcsshop" server_var(wcs_key) "maxamount"
+	es_format wcs_tmp1 "item_%1" server_var(wcs_key)
+	es_keygetvalue wcs_tmp2 "wcsuserdata" server_var(wcs_userid) server_var(wcs_tmp1)
+	if (server_var(wcs_tmp2) = "0") then es_xset wcs_tmp2 0
+	if (server_var(wcs_amount) = "0") then es_xset wcs_tmp2 -1
+	es_xset wcs_ok 0
+	if (server_var(wcs_icost) <= server_var(wcs_money)) then es_xif (server_var(wcs_ilevel) <= server_var(wcs_level)) then es_xif (server_var(wcs_amount) > server_var(wcs_tmp2)) then es_xset wcs_ok "1"
+	if (server_var(wcs_ok) = "1") do
+	{
+		es_xset wcs_ok "0"
+		if (server_var(wcs_idab) = server_var(wcs_deadoralive)) then es_xset wcs_ok "1"
+		if (server_var(wcs_idab) = "2") then es_xset wcs_ok "1"
+	}
+	if (server_var(wcs_ok) = "1") do
+	{
+		es_format wcs_text "%1 \n->%2. %3 ($%4)" server_var(wcs_text) server_var(wcs_counter) server_var(wcs_iname) server_var(wcs_icost)
+	}
+	es_xelse do
+	{
+		// not selectable item
+		if (server_var(wcs_ilevel) > 0) then es_xformat wcs_text "%1 \n%2. %3 ($%4) (lvl %5)" server_var(wcs_text) server_var(wcs_counter) server_var(wcs_iname) server_var(wcs_icost) server_var(wcs_ilevel)
+		if (server_var(wcs_ilevel) = "0") then es_xformat wcs_text "%1 \n%2. %3 ($%4)" server_var(wcs_text) server_var(wcs_counter) server_var(wcs_iname) server_var(wcs_icost)
+		wcs_getlanguage "wcs_lng" "wcs_lng_shopoutofstock"
+		if (server_var(wcs_amount) != "0") then es_xif (server_var(wcs_amount) <= server_var(wcs_tmp2)) then es_xformat wcs_text "%1 (%2)" server_var(wcs_text) server_var(wcs_lng)
+	}
+	// IMPORTANT !!
+	es_xmath wcs_counter + 1
+	if (server_var(wcs_debug) = "1") then echo wcs_shop_menu_init end
+}
+
+block wcs_shop_handle
+{
+	if (server_var(wcs_debug) = "1") then echo wcs_shop_handle start
+	es_xset wcs_ok "0"
+	// shop1 or shop2
+	if (server_var(wcs_menu) = "shop1") do
+	{
+		if (event_var(commandstring) >= 1) then es_xif (event_var(commandstring) <= server_var(wcs_numberoficats)) then es_xset wcs_ok "1"
+		if (server_var(wcs_ok) = "0") then wcs_menuzero event_var(userid)
+		if (server_var(wcs_ok) = "1") then wcs_shop_menu2 event_var(userid) event_var(commandstring)
+	}
+	if (server_var(wcs_menu) = "shop2") do
+	{
+		// handle back
+		if (event_var(commandstring) = "10") then wcs_shop_menu event_var(userid)
+		// handle buy
+		if (event_var(commandstring) <= 9) do
+		{
+			if (event_var(commandstring) > 0) do
+			{
+				// get the users data
+				es_keygetvalue wcs_page "wcsuserdata" event_var(userid) "page"
+				es_keygetvalue wcs_id "wcsuserdata" event_var(userid) "id"
+				// find the item
+				es_xset wcs_key 0
+				es_xset wcs_counter 0
+				es_xset wcs_itemid 0
+				es_xforeachkey wcs_key in "wcsshop" "es_keygetvalue wcs_category wcsshop server_var(wcs_key) category;if (server_var(wcs_category) = server_var(wcs_page)) then es_xmath wcs_counter + 1;if (server_var(wcs_counter) = event_var(commandstring)) then es_xset wcs_itemid server_var(wcs_key);if (server_var(wcs_counter) = event_var(commandstring)) then es_xset wcs_counter 9999999"
+				// check item and user data
+				if (server_var(wcs_itemid) != "0") do
+				{
+					// get the money (for DOD:S special handling)
+					es_xset wcs_money 0
+					if (server_var(wcs_game) = server_var(wcs_game_css)) then es_xgetmoney wcs_money event_var(userid)
+					if (server_var(wcs_game) != server_var(wcs_game_css)) then es_xkeygetvalue wcs_money "wcsuserdata" event_var(userid) "credits"
+					// get the level
+					es_keygetvalue wcs_level wcsuserdata event_var(userid) level
+					// check dead or alive status
+					es_xset wcs_dead "1"
+					es_getplayerprop wcs_dead event_var(userid) "CCSPlayer.baseclass.pl.deadflag"
+					if (server_var(wcs_dead) = "0") then es_xset wcs_deadoralive "1"
+					if (server_var(wcs_dead) = "1") then es_xset wcs_deadoralive "0"
+					es_keygetvalue wcs_iname "wcsshop" server_var(wcs_itemid) "name"
+					es_keygetvalue wcs_icost "wcsshop" server_var(wcs_itemid) "cost"
+					es_keygetvalue wcs_ilevel "wcsshop" server_var(wcs_itemid) "level"
+					es_keygetvalue wcs_idab "wcsshop" server_var(wcs_itemid) "dab"
+					es_keygetvalue wcs_amount "wcsshop" server_var(wcs_itemid) "maxamount"
+					es_format wcs_tmp1 "item_%1" server_var(wcs_itemid)
+					es_keygetvalue wcs_tmp2 "wcsuserdata" event_var(userid) server_var(wcs_tmp1)
+					if (server_var(wcs_tmp2) = "0") then es_xset wcs_tmp2 "0"
+					if (server_var(wcs_amount) = "0") then es_xset wcs_tmp2 -1
+					es_xset wcs_ok 0
+					if (server_var(wcs_icost) <= server_var(wcs_money)) then es_xif (server_var(wcs_ilevel) <= server_var(wcs_level)) then es_xif (server_var(wcs_amount) > server_var(wcs_tmp2)) then es_xset wcs_ok "1"
+					es_xset wcs_isname 0
+					es_keygetvalue wcs_isname "wcsshop" server_var(wcs_itemid) "shortname"
+					es_xset wcs_restriction 0
+					es wcs_getinfo restrictitem wcs_restriction event_var(userid)
+					if (server_var(wcs_isname) notin server_var(wcs_restriction)) do
+					{
+						if (server_var(wcs_ok) = "1") do
+						{
+							es_xset wcs_ok "0"
+							if (server_var(wcs_idab) = server_var(wcs_deadoralive)) then es_xset wcs_ok "1"
+							if (server_var(wcs_idab) = "2") then es_xset wcs_ok "1"
+						}
+						if (server_var(wcs_ok) = "1") do
+						{
+							es_format wcs_text "%1 \n->%2. %3 ($%4)" server_var(wcs_text) server_var(wcs_counter) server_var(wcs_iname) server_var(wcs_icost)
+							// first pay, then give item :)
+							if (server_var(wcs_game) = server_var(wcs_game_css)) do
+							{
+								es_set wcs_icost_event server_var(wcs_icost)
+								es_format wcs_icost "-%1" server_var(wcs_icost)
+								es playerset cashadd event_var(userid) server_var(wcs_icost)
+								//es wcs_setfx cash event_var(userid) - server_var(wcs_icost)
+							}
+							else do
+							{
+								es_math wcs_money - server_var(wcs_icost)
+								es_keysetvalue "wcsuserdata" server_var(wcs_id) "credits" server_var(wcs_money)
+							}
+							es wcs_giveshopitem event_var(userid) server_var(wcs_itemid)
+							es_xevent initialize wcs_itembought
+							es_event setint wcs_itembought userid event_var(userid)
+							es_event setint wcs_itembought cost server_var(wcs_icost_event)
+							es_event setstring wcs_itembought item server_var(wcs_iname)
+							es_xevent fire wcs_itembought
+						}
+					}
+					else do
+					{
+						es_tell event_var(userid) #multi #green[wcs] #defaultThis item is #greenrestricted!
+					}
+				}
+			}
+		}
+		// set page to 0 if item selected
+		if (event_var(commandstring) != "10") then wcs_menuzero event_var(userid)
+	}
+	if (server_var(wcs_debug) = "1") then echo wcs_shop_handle end
+}
+
+block wcs_giveshopitem
+{
+	if (server_var(wcs_debug) = "1") then echo wcs_giveshopitem start
+	es_xset wcs_userid 0
+	es_xgetargv wcs_userid 1
+	es_xset wcs_itemid 0
+	es_xgetargv wcs_itemid 2
+	es_exists wcs_exists userid server_var(wcs_userid)
+	if (server_var(wcs_exists) = 1) do
+	{
+		es_exists wcs_exists key wcsshop server_var(wcs_itemid)
+		if (server_var(wcs_exists) = 1) do
+		{
+			// get user id
+			es_xset wcs_id 0
+			es_keygetvalue wcs_id wcsuserdata server_var(wcs_userid) id
+			es_xset wcs_itype 0
+			es_keygetvalue wcs_itype wcsshop server_var(wcs_itemid) itemconfig
+
+			es_xset wcs_validtypes "player_buy player_death player_attacker player_victim player_spawn player_say"
+			if (server_var(wcs_itype) in server_var(wcs_validtypes)) do
+			{
+				// get item details
+				es_xset wcs_iduration 0
+				es_keygetvalue wcs_iduration wcsshop server_var(wcs_itemid) duration
+				es_xset wcs_ibuy 0
+				es_keygetvalue wcs_ibuy wcsshop server_var(wcs_itemid) cmdbuy
+				es_xset wcs_iactivate 0
+				es_keygetvalue wcs_iactivate wcsshop server_var(wcs_itemid) cmdactivate
+				es_xset wcs_icat 0
+				if (server_var(wcs_itype) = "player_death") then es_xset wcs_icat wcspd
+				if (server_var(wcs_itype) = "player_attacker") then es_xset wcs_icat wcspha
+				if (server_var(wcs_itype) = "player_victim") then es_xset wcs_icat wcsphv
+				if (server_var(wcs_itype) = "player_spawn") then es_xset wcs_icat wcsps
+				if (server_var(wcs_itype) = "player_say") then es_xset wcs_icat wcspsay
+				es_xset wcs_icmd1 0
+				es_xset wcs_icmd2 0
+				es_xset wcs_idescr 0
+				es_xset wcs_islot "0"
+				// refresh the steamid/ip
+				if (server_var(wcs_icat) != 0) then es_keycreate server_var(wcs_icat) server_var(wcs_userid)
+				if (server_var(wcs_icat) != 0) then es_keysetvalue server_var(wcs_icat) server_var(wcs_userid) id server_var(wcs_id)
+				// check if second is free
+				if (server_var(wcs_icat) != 0) then es_keygetvalue wcs_icmd2 server_var(wcs_icat) server_var(wcs_userid) icmd2
+				es_strlen wcs_strlen server_var(wcs_icmd2)
+				if (server_var(wcs_strlen) <= 1) then es_xset wcs_islot "2"
+				// check if first is free
+				if (server_var(wcs_icat) != 0) then es_keygetvalue wcs_icmd1 server_var(wcs_icat) server_var(wcs_userid) icmd1
+				es_strlen wcs_strlen server_var(wcs_icmd1)
+				if (server_var(wcs_strlen) <= 1) then es_xset wcs_islot "1"
+				// launch buy command
+				if (server_var(wcs_islot) in "1,2") do
+				{
+					if (server_var(wcs_ibuy) != "0") do
+					{
+						es alias wcs_cmd server_var(wcs_ibuy)
+						wcs_cmd
+					}
+					wcs_getlanguage "wcs_lng" "wcs_lng_purchased"
+					es_format wcs_text "#lightgreen%1: #green%2" server_var(wcs_lng) server_var(wcs_iname)
+					es_tell event_var(userid) #multi server_var(wcs_text)
+					// add the item to the player record
+					es_keygetvalue wcs_amount "wcsshop" server_var(wcs_itemid) "maxamount"
+					if (server_var(wcs_amount) != "0") do
+					{
+						es_format wcs_tmp1 "item_%1" server_var(wcs_itemid)
+						es_keygetvalue wcs_tmp2 "wcsuserdata" server_var(wcs_userid) server_var(wcs_tmp1)
+						if (server_var(wcs_tmp2) = "0") then es_xset wcs_tmp2 "0"
+						es_xmath wcs_tmp2 + 1
+						es_keysetvalue "wcsuserdata" server_var(wcs_userid) server_var(wcs_tmp1) server_var(wcs_tmp2)
+					}
+					// dont allow buy items to be activated
+					if (server_var(wcs_itype) = "player_buy") then es_xset wcs_iactivate 0
+					if (server_var(wcs_iduration) = "0") then es_xset wcs_iactivate 0
+					// insert item in the launch keygroup
+					if (server_var(wcs_iactivate) != "0") do
+					{
+						es_xset wcs_icat 0
+						if (server_var(wcs_itype) = "player_death") then es_xset wcs_icat wcspd
+						if (server_var(wcs_itype) = "player_attacker") then es_xset wcs_icat wcspha
+						if (server_var(wcs_itype) = "player_victim") then es_xset wcs_icat wcsphv
+						if (server_var(wcs_itype) = "player_spawn") then es_xset wcs_icat wcsps
+						if (server_var(wcs_itype) = "player_say") then es_xset wcs_icat wcspsay
+						es_xset wcs_icmd1 0
+						es_xset wcs_icmd2 0
+						es_xset wcs_idescr 0
+						es_xset wcs_islot "0"
+						// refresh the steamid/ip
+						es_keycreate server_var(wcs_icat) server_var(wcs_userid)
+						es_keysetvalue server_var(wcs_icat) server_var(wcs_userid) id server_var(wcs_id)
+						// check if second is free
+						es_keygetvalue wcs_icmd2 server_var(wcs_icat) server_var(wcs_userid) icmd2
+						es_strlen wcs_strlen server_var(wcs_icmd2)
+						if (server_var(wcs_strlen) <= 1) then es_xset wcs_islot "2"
+						// check if first is free
+						es_keygetvalue wcs_icmd1 server_var(wcs_icat) server_var(wcs_userid) icmd1
+						es_strlen wcs_strlen server_var(wcs_icmd1)
+						if (server_var(wcs_strlen) <= 1) then es_xset wcs_islot "1"
+						if (server_var(wcs_islot) = "0") do
+						{
+							// payback....
+							wcs_getlanguage "wcs_lng" "wcs_lng_bagfull"
+							es_tell server_var(wcs_userid) #multi server_var(wcs_lng)
+							es_xset wcs_icost 0
+							es_keygetvalue wcs_icost wcsshop server_var(wcs_itemid) cost
+							es_delayed 1 playerset cashadd server_var(wcs_userid) server_var(wcs_icost)
+						}
+						if (server_var(wcs_islot) in "1,2") do
+						{
+							wcs_getlanguage "wcs_lng" "wcs_lng_bagusage"
+							es_format wcs_lng server_var(wcs_lng) server_var(wcs_islot)
+							es_tell server_var(wcs_userid) #multi server_var(wcs_lng)
+							// insert
+							es_format wcs_tmp "icmd%1" server_var(wcs_islot)
+							es_keysetvalue server_var(wcs_icat) server_var(wcs_userid) server_var(wcs_tmp) server_var(wcs_iactivate)
+							// but dont notice on player_hurt event (too much spam)
+							if (server_var(wcs_icat) != "player_attacker") do
+							{
+								if (server_var(wcs_icat) != "player_victim") do
+								{
+									es_xset wcs_iname 0
+									es_keygetvalue wcs_iname wcsshop server_var(wcs_itemid) name
+									wcs_getlanguage "wcs_lng" "wcs_lng_activated"
+									es_format wcs_text "#lightgreen%1 #green%2" server_var(wcs_lng) server_var(wcs_iname)
+									es_format wcs_text "es_tell %1 #multi %2" server_var(wcs_userid) server_var(wcs_text)
+									es_format wcs_tmp "idescr%1" server_var(wcs_islot)
+									es_keysetvalue server_var(wcs_icat) server_var(wcs_userid) server_var(wcs_tmp) server_var(wcs_text)
+								}
+							}
+						}
+						// refresh skills
+						es wcs_skillcheck server_var(wcs_userid)
+					}
+				}
+				if (server_var(wcs_islot) = "0") do
+				{
+					// payback....
+					wcs_getlanguage "wcs_lng" "wcs_lng_bagfull"
+					es_tell server_var(wcs_userid) #multi server_var(wcs_lng)
+					es_xset wcs_icost 0
+					es_keygetvalue wcs_icost wcsshop server_var(wcs_itemid) cost
+					es_delayed 1 playerset cashadd server_var(wcs_userid) server_var(wcs_icost)
+				}
+
+			}
+		}
+	}
+	if (server_var(wcs_debug) = "1") then echo wcs_giveshopitem end
+}
+// <<<<<<<<<<<<<<<<< END SHOP BLOCKS >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+// >>>>>>>>>>>>>>>>> SHOP INFO >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+block wcs_showshopinfo
+{
+	if (server_var(wcs_debug) = "1") then echo wcs_showshopinfo start
+	// first, is it a custom command ?
+	es_xgetargv wcs_userid 1
+	es_exists wcs_exists userid server_var(wcs_userid)
+	if (server_var(wcs_exists) = 0) do
+	{
+		// or a say command
+		es_xgetcmduserid wcs_userid
+		es_exists wcs_exists userid server_var(wcs_userid)
+		es wcs_menuzero server_var(wcs_userid)
+	}
+	es_keysetvalue "wcsuserdata" server_var(wcs_userid) "menu" "shopinfo"
+	es_xset wcs_page 0
+	es_keygetvalue wcs_page "wcsuserdata" server_var(wcs_userid) "page"
+	es_xmath wcs_page + 1
+	es_keysetvalue "wcsuserdata" server_var(wcs_userid) "page" server_var(wcs_page)
+	es_xset wcs_infotext 0
+	es_keygetvalue wcs_infotext wcsinfo shopinfo server_var(wcs_page)
+	es_strlen wcs_strlen server_var(wcs_infotext)
+	if (server_var(wcs_strlen) > 1) then es_xmenu 0 server_var(wcs_userid) server_var(wcs_infotext)
+	if (server_var(wcs_debug) = "1") then echo wcs_showshopinfo start
+}
+
+block wcs_shopinfo
+{
+	if (server_var(wcs_debug) = "1") then echo wcs_shopinfo start
+	es_xforeachkey wcs_key in wcsshop "es_xdoblock wcs/wcsshop/wcs_shopinfo_items"
+	if (server_var(wcs_debug) = "1") then echo wcs_shopinfo end
+}
+
+block wcs_shopinfo_items
+{
+	es_keygetvalue wcs_name wcsshop server_var(wcs_key) name
+	es_keygetvalue wcs_descr wcsshop server_var(wcs_key) description
+	es_keygetvalue wcs_cost wcsshop server_var(wcs_key) cost
+	es_keygetvalue wcs_level wcsshop server_var(wcs_key) level
+	es_keygetvalue wcs_dab wcsshop server_var(wcs_key) dab
+	es_keygetvalue wcs_duration wcsshop server_var(wcs_key) duration
+	es_keygetvalue wcs_amount "wcsshop" server_var(wcs_key) "maxamount"
+	es_format wcs_text "\n->%1.     %2 \n ( $%3 | min. level %4 )" server_var(wcs_key) server_var(wcs_name) server_var(wcs_cost) server_var(wcs_level)
+	wcs_getlanguage "wcs_lng" "wcs_lng_buywhen"
+	es_format wcs_text "%1\n%2 <" server_var(wcs_text) server_var(wcs_lng)
+	wcs_getlanguage "wcs_lng" "wcs_lng_dab0"
+	if (server_var(wcs_dab) = 0) then es_xformat wcs_text "%1%2>" server_var(wcs_text) server_var(wcs_lng)
+	wcs_getlanguage "wcs_lng" "wcs_lng_dab1"
+	if (server_var(wcs_dab) = 1) then es_xformat wcs_text "%1%2>" server_var(wcs_text) server_var(wcs_lng)
+	wcs_getlanguage "wcs_lng" "wcs_lng_dab2"
+	if (server_var(wcs_dab) = 2) then es_xformat wcs_text "%1%2>" server_var(wcs_text) server_var(wcs_lng)
+	wcs_getlanguage "wcs_lng" "wcs_lng_duration"
+	es_format wcs_text "%1 %2 <" server_var(wcs_text) server_var(wcs_lng)
+	wcs_getlanguage "wcs_lng" "wcs_lng_thisround"
+	if (server_var(wcs_duration) = 0) then es_xformat wcs_text "%1%2>" server_var(wcs_text) server_var(wcs_lng)
+	wcs_getlanguage "wcs_lng" "wcs_lng_untildeath"
+	if (server_var(wcs_duration) = 1) then es_xformat wcs_text "%1%2>" server_var(wcs_text) server_var(wcs_lng)
+	if (server_var(wcs_amount) > 0) do
+	{
+		wcs_getlanguage "wcs_lng" "wcs_lng_itemstock"
+		es_format wcs_tmp1 server_var(wcs_lng) server_var(wcs_amount)
+		es_format wcs_text "%1\n%2" server_var(wcs_text) server_var(wcs_tmp1)
+	}
+	wcs_getlanguage "wcs_lng" "wcs_lng_buy"
+	es_format wcs_text "%1\n \n%2\n \n->7. %3" server_var(wcs_text) server_var(wcs_descr) server_var(wcs_lng)
+	if (server_var(wcs_key) > 1) then es_xformat wcs_text "%1\n->8. %2" server_var(wcs_text) server_var(wcs_lng_back)
+	es_set wcs_keynext server_var(wcs_key)
+	es_xmath wcs_keynext + 1
+	es_exists wcs_exists key wcsshop server_var(wcs_keynext)
+	if (server_var(wcs_exists) = 1) then es_xformat wcs_text "%1\n->9. %2" server_var(wcs_text) server_var(wcs_lng_next)
+	es_keysetvalue wcsinfo shopinfo server_var(wcs_key) server_var(wcs_text)
+}
+
+
+

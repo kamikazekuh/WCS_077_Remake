@@ -1,0 +1,501 @@
+////////////////////////////////////////
+// wcs - Warcraft:Source              //
+// ---------------------------------- //
+//  by kRypT0n!Te                     //
+//      http://wcs.despo-clan.de      //
+//                                    //
+// wcs - Warcraft:Orangebox           //
+// ---------------------------------- //
+//  by [Oddity]TeacherCreature        //
+//    http://www.warcraft-source.net  //
+// ---------------------------------- //
+// Content of this subscript          //
+// - race handling                    //
+////////////////////////////////////////
+// say commands:
+// raceinfo, changerace
+//
+// admin commands:
+// wcs_race_menu <userid>
+// wcs_showraceinfo <userid>
+//
+////////////////////////////////////////
+
+block load
+{
+	es_xexists wcs_exists keygroup "wcsinfo"
+	if (server_var(wcs_exists) = 0) then es_xkeygroupcreate "wcsinfo"
+	es_xexists wcs_exists key "wcsinfo" "raceinfo"
+	if (server_var(wcs_exists) = 0) do
+	{
+		es_xkeycreate "wcsinfo" "raceinfo"
+	}
+	es_xelse do
+	{
+		es_xkeydelete "wcsinfo" "raceinfo"
+		es_xkeycreate "wcsinfo" "raceinfo"
+	}
+	es_xkeygroupload "wcsraces" "|wcs/wcsraces"
+	// loadup races, shop items
+	es_xset wcs_numberofraces 0
+	alias wcs_checkracealias "if (racealias in server_var(wcs_val)) then es_xkeygetvalue wcs_tmp wcsraces server_var(wcs_key) server_var(wcs_val);if (racealias in server_var(wcs_val)) then alias server_var(wcs_val) server_var(wcs_tmp)"
+	alias wcs_checkracelanguage "if (wcs_lng_r in server_var(wcs_name)) then wcs_getlanguage wcs_name server_var(wcs_name);es_keysetvalue wcsraces server_var(wcs_key) name server_var(wcs_name);es_keygetvalue wcs_descr wcsraces server_var(wcs_key) skilldescr;if (wcs_lng_r in server_var(wcs_descr)) then wcs_getlanguage wcs_descr server_var(wcs_descr);wcs_checkracelanguage2"
+	alias wcs_checkracelanguage2 "es_keysetvalue wcsraces server_var(wcs_key) skilldescr server_var(wcs_descr);es_keygetvalue wcs_tmp wcsraces server_var(wcs_key) skillnames;if (wcs_lng_r in server_var(wcs_tmp)) then wcs_getlanguage wcs_tmp server_var(wcs_tmp);es_keysetvalue wcsraces server_var(wcs_key) skillnames server_var(wcs_tmp);wcs_checkracelanguage3"
+	alias wcs_checkracelanguage3 "es_keygetvalue wcs_descr wcsraces server_var(wcs_key) shortdescription;if (wcs_lng_r in server_var(wcs_descr)) then wcs_getlanguage wcs_descr server_var(wcs_descr);es_keysetvalue wcsraces server_var(wcs_key) shortdescription server_var(wcs_descr)"
+	es_xforeachkey wcs_key in "wcsraces" "es_keygetvalue wcs_cmd wcsraces server_var(wcs_key) preloadcmd;if (server_var(wcs_cmd) != 0) then alias wcs_loadcmd server_var(wcs_cmd);if (server_var(wcs_cmd) != 0) then wcs_loadcmd;es_foreachval wcs_val in wcsraces server_var(wcs_key) wcs_checkracealias;es_keygetvalue wcs_name wcsraces server_var(wcs_key) name;wcs_checkracelanguage;es echo [wcs] Loaded race : server_var(wcs_name);es_xmath wcs_numberofraces + 1"
+	es echo "[wcs] Total : " server_var(wcs_numberofraces) " Races loaded"
+	// create the raceinfo data
+	es_xdoblock wcs/wcsraces/wcs_raceinfo
+	es_xexists wcs_exists command wcs_race_menu
+	if (server_var(wcs_exists) = 0) then es_xregcmd wcs_race_menu wcs/wcsraces/wcs_race_menu "wcs_race_menu - usage: wcs_race_menu <userid>"
+	es_xexists wcs_exists command wcs_showraceinfo
+	if (server_var(wcs_exists) = 0) then es_xregcmd wcs_showraceinfo wcs/wcsraces/wcs_showraceinfo "Shows detail info about races"
+	es_xexists wcs_exists command changerace
+	if (server_var(wcs_exists) = 0) then es_xregsaycmd changerace wcs/wcsraces/wcs_changerace "Change your race"
+	es_xexists wcs_exists command raceinfo
+	if (server_var(wcs_exists) = 0) then es_xregsaycmd raceinfo wcs/wcsraces/sraceinfo "Shows detail info about the races"
+}
+
+block unload
+{
+	es_xkeygroupdelete "wcsraces"
+	es_xkeydelete "wcsinfo" "raceinfo"
+}
+
+event dod_round_start
+{
+	// checks the roundstartcmd for all races
+	es_xforeachkey wcs_key in "wcsraces" "es_keygetvalue wcs_cmd wcsraces server_var(wcs_key) round_start_cmd;es_strlen wcs_strlen server_var(wcs_cmd);if (server_var(wcs_strlen) > 1) then alias wcs_runcmd server_var(wcs_cmd);if (server_var(wcs_strlen) > 1) then wcs_runcmd"
+}
+
+event round_start
+{
+	// checks the roundstartcmd for all races
+	es_xforeachkey wcs_key in "wcsraces" "es_keygetvalue wcs_cmd wcsraces server_var(wcs_key) round_start_cmd;es_strlen wcs_strlen server_var(wcs_cmd);if (server_var(wcs_strlen) > 1) then alias wcs_runcmd server_var(wcs_cmd);if (server_var(wcs_strlen) > 1) then wcs_runcmd"
+}
+event round_end
+{
+	// checks the roundendcmd for all races, and reset race counter
+	es_xforeachkey wcs_key in "wcsraces" "es_keygetvalue wcs_cmd wcsraces server_var(wcs_key) round_end_cmd;es_strlen wcs_strlen server_var(wcs_cmd);if (server_var(wcs_strlen) > 1) then alias wcs_runcmd server_var(wcs_cmd);if (server_var(wcs_strlen) > 1) then wcs_runcmd;es_keysetvalue wcsraces server_var(wcs_key) 2 0;es_keysetvalue wcsraces server_var(wcs_key) 3 0"
+	if (server_var(wcs_cfg_enableraceteamlimit) = "1") do
+	{
+		// check the player's races
+		es_xforeachkey wcs_key in "wcsuserdata" "es_getplayerteam wcs_team server_var(wcs_key);es_keygetvalue wcs_race wcsuserdata server_var(wcs_key) race;es_keygetvalue wcs_tmp wcsraces server_var(wcs_race) server_var(wcs_team);es_xmath wcs_tmp + 1;if (server_var(wcs_team) >= 2) then es_xif (server_var(wcs_team) <= 3) then es_xkeysetvalue wcsraces server_var(wcs_race) server_var(wcs_team) server_var(wcs_tmp)"
+		// check again, if one player is over the race limit/team
+		es_xforeachkey wcs_key in "wcsuserdata" "es_getplayerteam wcs_team server_var(wcs_key);es_keygetvalue wcs_race wcsuserdata server_var(wcs_key) race;es_keygetvalue wcs_tmp wcsraces server_var(wcs_race) server_var(wcs_team);es_keygetvalue wcs_limit wcsraces server_var(wcs_race) teamlimit;if (server_var(wcs_limit) != 0) then es_xif (server_var(wcs_limit) < server_var(wcs_tmp)) then es_xdoblock wcs/wcsraces/wcs_checkplayerrace"
+	}
+}
+
+event player_team
+{
+	es_exists wcs_exists key wcsuserdata event_var(userid)
+	if (server_var(wcs_cfg_enableraceteamlimit) != "1") then es_xset wcs_exists "0"
+	if (server_var(wcs_exists) = "1") do
+	{
+		es_keygetvalue wcs_limit wcsuserdata event_var(userid) "limitedrace"
+		if (server_var(wcs_limit) = "1") do
+		{
+			if (server_var(wcs_cfg_limitedraceforcespec) = "1") then es_changeteam event_var(userid) 1
+			es_tell event_var(userid) #multi #greenPlease change your race -> #lightgreen'changerace'
+		}
+	}
+}
+
+block wcs_checkplayerrace
+{
+	// wcs_key=userid wcs_race=race wcs_tmp=status wcs_limit=limit
+	es_keysetvalue wcsuserdata server_var(wcs_key) "limitedrace" "1"
+	if (server_var(wcs_cfg_limitedraceforcespec) = "1") then es_changeteam server_var(wcs_key) 1
+	es_keygetvalue wcs_racename "wcsraces" server_var(wcs_race) "name"
+	wcs_getlanguage "wcs_lng" "wcs_lng_limitedrace"
+	es_format wcs_lng server_var(wcs_lng) server_var(wcs_race) server_var(wcs_racename) server_var(wcs_limit) server_var(wcs_tmp)
+	es_menu 10 server_var(wcs_key) server_var(wcs_lng)
+}
+
+// >>>>>>>>>>>>>>>>> RACE INFO >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+block sraceinfo
+{
+	es_xset wcs_userid 0
+	es_xgetcmduserid wcs_userid
+	es wcs_raceinfomenu server_var(wcs_userid)
+}
+
+block wcs_showraceinfo
+{
+	if (server_var(wcs_debug) = "1") then echo wcs_showraceinfo start
+	es_xset wcs_userid 0
+	es_xset wcs_exists 0
+	es_xgetargv wcs_userid 1
+	es_keygetvalue wcs_page wcsuserdata server_var(wcs_userid) page
+	es_keysetvalue wcsuserdata server_var(wcs_userid) menu "raceinfo"
+	es_xmath wcs_page + 1
+	es_keysetvalue wcsuserdata server_var(wcs_userid) page server_var(wcs_page)
+	es_xset wcs_infotext 0
+	es_keygetvalue wcs_infotext wcsinfo raceinfo server_var(wcs_page)
+	if (server_var(wcs_infotext) != "0") do
+	{
+		es_strlen wcs_strlen server_var(wcs_infotext)
+		if (server_var(wcs_strlen) <= 1020) then es_xmenu 0 server_var(wcs_userid) server_var(wcs_infotext)
+		if (server_var(wcs_strlen) > 1020) then es_xmenu 0 server_var(wcs_userid) "WARNING:\n \n Text too long ! Report this to an admin."
+	}
+	if (server_var(wcs_debug) = "1") then echo wcs_showraceinfo end
+}
+
+block wcs_raceinfo
+{
+	if (server_var(wcs_debug) = "1") then echo wcs_raceinfo start
+	es_xforeachkey wcs_key in wcsraces "es_keygetvalue wcs_name wcsraces server_var(wcs_key) name;es_keygetvalue wcs_numberofskills wcsraces server_var(wcs_key) numberofskills;es_keygetvalue wcs_numberoflevels wcsraces server_var(wcs_key) numberoflevels;es_xdoblock wcs/wcsraces/wcs_raceinfo_skills1"
+	if (server_var(wcs_debug) = "1") then echo wcs_raceinfo end
+}
+
+block wcs_raceinfo_skills1
+{
+	wcs_getlanguage "wcs_lng" "wcs_lng_skills"
+	es_format wcs_text "\n->%1.      %2 (%3 lvls/%4 %5)\n" server_var(wcs_key) server_var(wcs_name) server_var(wcs_numberoflevels) server_var(wcs_numberofskills) server_var(wcs_lng)
+	es_keygetvalue wcs_requiredlevel wcsraces server_var(wcs_key) required_level
+	wcs_getlanguage "wcs_lng" "wcs_lng_required"
+	wcs_getlanguage "wcs_lng2" "wcs_lng_level"
+	if (server_var(wcs_cfg_requiredlevel) = 1) then es_xif (server_var(wcs_requiredlevel) > 0) then es_xformat wcs_text "%1%2 %3 : %4\n" server_var(wcs_text) server_var(wcs_lng) server_var(wcs_lng2) server_var(wcs_requiredlevel)
+	es_keygetvalue wcs_maxlevel "wcsraces" server_var(wcs_key) "maximum_level"
+	wcs_getlanguage "wcs_lng" "wcs_lng_maxlevel"
+	if (server_var(wcs_cfg_maxracelevel) = 1) then es_xif (server_var(wcs_maxlevel) > 0) then es_xformat wcs_text server_var(wcs_lng) server_var(wcs_text) server_var(wcs_maxlevel)
+	es_keygetvalue wcs_allow_only wcsraces server_var(wcs_key) allow_only
+	wcs_getlanguage "wcs_lng" "wcs_lng_privaterace"
+	if (server_var(wcs_cfg_restrictedrace) = 1) then es_xif (server_var(wcs_allow_only) != "0") then es_xformat wcs_text "%1< %2 > \n" server_var(wcs_text) server_var(wcs_lng)
+	es_keygetvalue wcs_author wcsraces server_var(wcs_key) author
+	if (server_var(wcs_author) != "0") then es_xformat wcs_text "%1 credits: %2\n \n" server_var(wcs_text) server_var(wcs_author)
+	es_keygetvalue wcs_skillname wcsraces server_var(wcs_key) skillnames
+	es_keygetvalue wcs_skilldescr wcsraces server_var(wcs_key) skilldescr
+	es_xset wcs_counter 1
+	while "server_var(wcs_numberofskills) >= server_var(wcs_counter)" "es_xdoblock wcs/wcsraces/wcs_raceinfo_skills2;es_xmath wcs_counter + 1"
+	es_format wcs_text "%1\n \n " server_var(wcs_text)
+	if (server_var(wcs_key) > 1) then es_xformat wcs_text "%1\n->8. %2" server_var(wcs_text) server_var(wcs_lng_back)
+	es_set wcs_keynext server_var(wcs_key)
+	es_xmath wcs_keynext + 1
+	es_exists wcs_exists key wcsraces server_var(wcs_keynext)
+	if (server_var(wcs_exists) = 1) then es_xformat wcs_text "%1\n->9. %2" server_var(wcs_text) server_var(wcs_lng_next)
+	es_keysetvalue wcsinfo raceinfo server_var(wcs_key) server_var(wcs_text)
+}
+
+block wcs_raceinfo_skills2
+{
+	es_token wcs_skill server_var(wcs_skillname) server_var(wcs_counter) "|"
+	es_token wcs_skilld server_var(wcs_skilldescr) server_var(wcs_counter) "|"
+	es_format wcs_text "%1\n->%2. %3\n%4" server_var(wcs_text) server_var(wcs_counter) server_var(wcs_skill) server_var(wcs_skilld)
+}
+// <<<<<<<<<<<<<<<<< END RACE INFO <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+// >>>>>>>>>>>>>>>>> START RACE MENU >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+block wcs_changerace
+{
+	if (server_var(wcs_debug) = "1") then echo wcs_changerace start
+	es_xset wcs_userid 0
+	// if its a say command
+	es_xgetcmduserid wcs_userid
+	es_exists wcs_exists userid server_var(wcs_userid)
+	if (server_var(wcs_exists) = 1) do
+	{
+		es_exists wcs_exists key wcsuserdata server_var(wcs_userid)
+		if (server_var(wcs_exists) = 1) do
+		{
+			es wcs_changeracemenu server_var(wcs_userid)
+		}
+	}
+	if (server_var(wcs_debug) = "1") then echo wcs_changerace end
+}
+
+block wcs_race_menu
+{
+	if (server_var(wcs_debug) = "1") then echo wcs_race_menu start
+	// a custom command
+	es_xgetargv wcs_userid 1
+	wcs_getlanguage "wcs_lng" "wcs_lng_chooserace"
+	es_format wcs_text "%1:\n " server_var(wcs_lng)
+	es_xset wcs_counter 0
+	// get ID
+	es_keygetvalue wcs_id wcsuserdata server_var(wcs_userid) id
+	es_getplayerteam wcs_team server_var(wcs_userid)
+	// get race level
+	es_keygetvalue wcs_race "wcsuserdata" server_var(wcs_userid) "race"
+	// variables
+	es_xset wcs_racename 0
+	es_keygetvalue wcs_page wcsuserdata server_var(wcs_userid) page
+	es_xmath wcs_page + 1
+	es_keysetvalue wcsuserdata server_var(wcs_userid) page server_var(wcs_page)
+	es_xset wcs_racenumber 0
+	es_xset wcs_raceid 0
+	es_xset wcs_addnum 7
+	es_math wcs_addnum * server_var(wcs_page)
+	es_xmath wcs_addnum - 7
+	// get id
+	es_math wcs_raceid + server_var(wcs_addnum)
+	// start is at 1
+	es_xset wcs_counter 1
+	// buildin menu 1..7
+	es_xmath wcs_raceid + 1
+	es_xdoblock wcs/wcsraces/wcs_race_menu_init
+	es_xmath wcs_raceid + 1
+	es_xdoblock wcs/wcsraces/wcs_race_menu_init
+	es_xmath wcs_raceid + 1
+	es_xdoblock wcs/wcsraces/wcs_race_menu_init
+	es_xmath wcs_raceid + 1
+	es_xdoblock wcs/wcsraces/wcs_race_menu_init
+	es_xmath wcs_raceid + 1
+	es_xdoblock wcs/wcsraces/wcs_race_menu_init
+	es_xmath wcs_raceid + 1
+	es_xdoblock wcs/wcsraces/wcs_race_menu_init
+	es_xmath wcs_raceid + 1
+	es_xdoblock wcs/wcsraces/wcs_race_menu_init
+	es_xmath wcs_raceid + 1
+	// check if we need next page
+	es_format wcs_text "%1 %2\n %3\n \n " server_var(wcs_lng_page) server_var(wcs_page) server_var(wcs_text)
+	if (server_var(wcs_raceid) > server_var(wcs_numberofraces)) then es_xif (server_var(wcs_page) = 1) then es_xformat wcs_text "%1 0. %2" server_var(wcs_text) server_var(wcs_lng_exit)
+	if (server_var(wcs_raceid) <= server_var(wcs_numberofraces)) then es_xif (server_var(wcs_page) = 1) then es_xformat wcs_text "%1 9. %2\n 0. %3" server_var(wcs_text) server_var(wcs_lng_next) server_var(wcs_lng_exit)
+	if (server_var(wcs_raceid) > server_var(wcs_numberofraces)) then es_xif (server_var(wcs_page) > 1) then es_xformat wcs_text "%1 8. %2\n 0. %3" server_var(wcs_text) server_var(wcs_lng_exit) server_var(wcs_lng_back) server_var(wcs_lng_exit)
+	if (server_var(wcs_raceid) <= server_var(wcs_numberofraces)) then es_xif (server_var(wcs_page) > 1) then es_xformat wcs_text "%1 8. %2\n 9. %3\n 0. %4" server_var(wcs_text) server_var(wcs_lng_exit) server_var(wcs_lng_back) server_var(wcs_lng_next) server_var(wcs_lng_exit)
+	es_menu 30 server_var(wcs_userid) server_var(wcs_text)
+	es_keysetvalue wcsuserdata server_var(wcs_userid) menu race
+	if (server_var(wcs_debug) = "1") then echo wcs_race_menu end
+}
+
+block wcs_race_menu_init
+{
+	if (server_var(wcs_debug) = "1") then echo wcs_race_menu_init start
+	if (server_var(wcs_raceid) <= server_var(wcs_numberofraces)) do
+	{
+		es_exists wcs_exists key wcsraces server_var(wcs_raceid)
+		if (server_var(wcs_exists) = 1) do
+		{
+			es_keygetvalue wcs_racename wcsraces server_var(wcs_raceid) name
+			if (server_var(wcs_racename) != 0) do
+			{
+				es_keygetvalue wcs_limit "wcsraces" server_var(wcs_raceid) "teamlimit"
+				es_xset wcs_limited "0"
+				if (server_var(wcs_cfg_enableraceteamlimit) != "1") then es_xset wcs_limit "0"
+				if (server_var(wcs_limit) != "0") do
+				{
+					es_keygetvalue wcs_tmp1 "wcsraces" server_var(wcs_raceid) "2"
+					es_keygetvalue wcs_tmp2 "wcsraces" server_var(wcs_raceid) "3"
+					if (server_var(wcs_team) = "1") then es_xif (server_var(wcs_tmp1) > server_var(wcs_tmp2)) then es_xcopy wcs_tmp1 wcs_tmp2
+					if (server_var(wcs_team) = "1") then es_xif (server_var(wcs_tmp1) >= server_var(wcs_limit)) then es_xset wcs_limited "1"
+					if (server_var(wcs_team) = "2") then es_xif (server_var(wcs_tmp1) >= server_var(wcs_limit)) then es_xset wcs_limited "1"
+					if (server_var(wcs_team) = "3") then es_xif (server_var(wcs_tmp2) >= server_var(wcs_limit)) then es_xset wcs_limited "1"
+				}
+				// get level stuff
+				es_format wcs_racef "race_%1" server_var(wcs_raceid)
+				es wcs_keygetvalue wcs_level server_var(wcs_id) server_var(wcs_racef)
+				es_token wcs_level server_var(wcs_level) "1" "|"
+				es_keygetvalue wcs_requiredlevel wcsraces server_var(wcs_raceid) "required_level"
+				es_keygetvalue wcs_allow_only wcsraces server_var(wcs_raceid) "allow_only"
+				if (server_var(wcs_cfg_restrictedrace) = 0) then es_xset wcs_allow_only 0
+				es_keygetvalue wcs_total_level "wcsuserdata" server_var(wcs_userid) "total_level"
+				if (server_var(wcs_cfg_requiredlevel) = "0") then es_xset wcs_requiredlevel 0
+				if (server_var(wcs_total_level) >= server_var(wcs_requiredlevel)) do
+				{
+					es_keygetvalue wcs_maxlevel "wcsraces" server_var(wcs_raceid) "maximum_level"
+					if (server_var(wcs_cfg_maxracelevel) = "0") then es_xset wcs_maxlevel server_var(wcs_total_level)
+					if (server_var(wcs_maxlevel) = "0") then es_xset wcs_maxlevel server_var(wcs_total_level)
+					if (server_var(wcs_total_level) <= server_var(wcs_maxlevel)) do
+					{
+						es_xset wcs_allow 0
+						if (server_var(wcs_allow_only) = 0) then es_xset wcs_allow 1
+						es_format wcs_uid "<%1>" server_var(wcs_id)
+						if (server_var(wcs_uid) in server_var(wcs_allow_only)) then es_xset wcs_allow 1
+						if (server_var(wcs_allow_only) != "0") do
+						{
+							if (server_var(wcs_uid) notin server_var(wcs_allow_only)) do
+							{
+								// check for admin
+								es_exists wcs_isadmin key "wcsadmin" server_var(wcs_id)
+								if (server_var(wcs_isadmin) = "1") then es_xif ("<admins>" in server_var(wcs_allow_only)) then es_xset wcs_allow "1"
+								if (server_var(wcs_allow) = 0) do
+								{
+									if (server_var(wcs_isadmin) = "0") then es_xif ("<admins>" in server_var(wcs_allow_only)) then wcs_getlanguage "wcs_lng" "wcs_lng_privaterace"
+									es_format wcs_text "%1 \n%2. %3 < %4 >" server_var(wcs_text) server_var(wcs_counter) server_var(wcs_racename) server_var(wcs_lng)
+								}
+							}
+						}
+						if (server_var(wcs_allow) = 1) do
+						{
+							if (server_var(wcs_limited) = "0") do
+							{
+								if (server_var(wcs_level) > 0) then es_xif (server_var(wcs_cfg_globallevel) = "0") then es_xformat wcs_text "%1 \n->%2. %3 (lvl %4)" server_var(wcs_text) server_var(wcs_counter) server_var(wcs_racename) server_var(wcs_level)
+								if (server_var(wcs_level) > 0) then es_xif (server_var(wcs_cfg_globallevel) = "1") then es_xformat wcs_text "%1 \n->%2. %3 (lvl %4)" server_var(wcs_text) server_var(wcs_counter) server_var(wcs_racename) server_var(wcs_total_level)
+								if (server_var(wcs_level) = 0) then es_xformat wcs_text "%1 \n->%2. %3" server_var(wcs_text) server_var(wcs_counter) server_var(wcs_racename)
+							}
+							es_xelse do
+							{
+								// level too high
+								wcs_getlanguage "wcs_lng" "wcs_lng_limited"
+								es_format wcs_text "%1 \n%2. %3 (%4 : %5)" server_var(wcs_text) server_var(wcs_counter) server_var(wcs_racename) server_var(wcs_lng) server_var(wcs_limit)
+							}
+						}
+					}
+					es_xelse do
+					{
+						// level too high
+						wcs_getlanguage "wcs_lng" "wcs_lng_maximum"
+						es_format wcs_text "%1 \n%2. %3 (%4 lvl %5)" server_var(wcs_text) server_var(wcs_counter) server_var(wcs_racename) server_var(wcs_lng) server_var(wcs_maxlevel)
+					}
+				}
+				es_xelse do
+				{
+					// level too low
+					es_math wcs_requiredlevel - server_var(wcs_total_level)
+					es_format wcs_text "%1 \n%2. %3 (%4 needed lvls)" server_var(wcs_text) server_var(wcs_counter) server_var(wcs_racename) server_var(wcs_requiredlevel)
+				}
+				if (server_var(wcs_cfg_changeracedetails) = "1") do
+				{
+					es_keygetvalue wcs_descr "wcsraces" server_var(wcs_raceid) "shortdescription"
+					if (server_var(wcs_descr) != "0") then es_xformat wcs_text "%1\n     %2" server_var(wcs_text) server_var(wcs_descr)
+				}
+				// IMPORTANT !!
+				es_xmath wcs_counter + 1
+			}
+			es_xelse do
+			{
+				es_format wcs_text "%1\n (-)" server_var(wcs_text)
+			}
+		}
+		es_xelse do
+		{
+			es_format wcs_text "%1\n (-)" server_var(wcs_text)
+		}
+	}
+	if (server_var(wcs_debug) = "1") then echo wcs_race_menu_init end
+}
+
+block wcs_race_handle
+{
+	if (server_var(wcs_debug) = "1") then echo wcs_race_handle start
+	es_xset wcs_page 0
+	es_keygetvalue wcs_page wcsuserdata event_var(userid) page
+	es_keygetvalue wcs_id wcsuserdata event_var(userid) id
+	es_xset wcs_r8id 7
+	es_math wcs_r8id * server_var(wcs_page)
+	es_xmath wcs_r8id + 1
+	// handle back
+	if (event_var(commandstring) = "8") do
+	{
+		if (server_var(wcs_page) > 1) do
+		{
+			es_xmath wcs_page - 2
+			es_keysetvalue wcsuserdata event_var(userid) page server_var(wcs_page)
+			es wcs_race_menu event_var(userid)
+		}
+	}
+	// handle next
+	if (event_var(commandstring) = "9") then es_xif (server_var(wcs_r8id) <= server_var(wcs_numberofraces)) then wcs_race_menu event_var(userid)
+	// race selected
+	if (event_var(commandstring) < 8) do
+	{
+		if (event_var(commandstring) > 0) do
+		{
+			es_xset wcs_raceid 0
+			es_xset wcs_racename 0
+			es_xset wcs_addnum 7
+			es_math wcs_addnum * server_var(wcs_page)
+			es_xmath wcs_addnum - 7
+			es_math wcs_raceid + server_var(wcs_addnum)
+			es_math wcs_raceid + event_var(commandstring)
+			es_exists wcs_exists key wcsraces server_var(wcs_raceid)
+			if (server_var(wcs_exists) = 1) do
+			{
+				es_keygetvalue wcs_racename wcsraces server_var(wcs_raceid) name
+				es_keygetvalue wcs_requiredlevel wcsraces server_var(wcs_raceid) required_level
+				es_keygetvalue wcs_total_level wcsuserdata server_var(wcs_userid) total_level
+				if (server_var(wcs_cfg_requiredlevel) = 0) then es_xset wcs_requiredlevel 0
+				es_keygetvalue wcs_allow_only wcsraces server_var(wcs_raceid) allow_only
+				if (server_var(wcs_cfg_restrictedrace) = 0) then es_xset wcs_allow_only 0
+				if (server_var(wcs_total_level) >= server_var(wcs_requiredlevel)) do
+				{
+					es_keygetvalue wcs_maxlevel "wcsraces" server_var(wcs_raceid) "maximum_level"
+					if (server_var(wcs_cfg_maxracelevel) = "0") then es_xset wcs_maxlevel server_var(wcs_total_level)
+					if (server_var(wcs_maxlevel) = "0") then es_xset wcs_maxlevel server_var(wcs_total_level)
+					if (server_var(wcs_total_level) <= server_var(wcs_maxlevel)) do
+					{
+						es_xset wcs_allow 0
+						if (server_var(wcs_allow_only) = 0) then es_xset wcs_allow 1
+						es_format wcs_uid "<%1>" server_var(wcs_id)
+						if (server_var(wcs_uid) in server_var(wcs_allow_only)) then es_xset wcs_allow 1
+						if (server_var(wcs_allow_only) != "0") do
+						{
+							if (server_var(wcs_uid) notin server_var(wcs_allow_only)) do
+							{
+								// check for admin
+								es_exists wcs_isadmin key "wcsadmin" server_var(wcs_id)
+								if (server_var(wcs_isadmin) = "1") then es_xif ("<admins>" in server_var(wcs_allow_only)) then es_xset wcs_allow "1"
+								if (server_var(wcs_allow) = 0) do
+								{
+									if (server_var(wcs_isadmin) = "0") then es_xif ("<admins>" in server_var(wcs_allow_only)) then wcs_getlanguage "wcs_lng" "wcs_lng_notallowed"
+									es_format wcs_text "#lightgreen%1 : #green%2" server_var(wcs_racename) server_var(wcs_lng)
+									es_tell event_var(userid) #multi server_var(wcs_text)
+								}
+							}
+						}
+						// check team limit
+						es_getplayerteam wcs_team event_var(userid)
+						es_keygetvalue wcs_limit "wcsraces" server_var(wcs_raceid) "teamlimit"
+						es_xset wcs_limited "0"
+						if (server_var(wcs_cfg_enableraceteamlimit) != "1") then es_xset wcs_limit "0"
+						if (server_var(wcs_limit) != "0") do
+						{
+							es_keygetvalue wcs_tmp1 "wcsraces" server_var(wcs_raceid) "2"
+							es_keygetvalue wcs_tmp2 "wcsraces" server_var(wcs_raceid) "3"
+							if (server_var(wcs_team) = "1") then es_xif (server_var(wcs_tmp1) > server_var(wcs_tmp2)) then es_xcopy wcs_tmp1 wcs_tmp2
+							if (server_var(wcs_team) = "1") then es_xif (server_var(wcs_tmp1) >= server_var(wcs_limit)) then es_xset wcs_allow "0"
+							if (server_var(wcs_team) = "2") then es_xif (server_var(wcs_tmp1) >= server_var(wcs_limit)) then es_xset wcs_allow "0"
+							if (server_var(wcs_team) = "3") then es_xif (server_var(wcs_tmp2) >= server_var(wcs_limit)) then es_xset wcs_allow "0"
+						}
+						if (server_var(wcs_allow) = 1) do
+						{
+							if (event_var(es_userdead) = 0) then wcs damage event_var(userid) event_var(userid) 10000
+							// save the old race !
+							es wcs_saveplayer event_var(userid)
+							es_keysetvalue "wcsuserdata" event_var(userid) "race" server_var(wcs_raceid)
+							if ("BOT" in event_var(es_steamid)) do
+							{
+								es_getplayername wcs_name event_var(userid)
+								es wcs_capitalize wcs_name server_var(wcs_name)
+								es_format wcs_id "BOT_%1" server_var(wcs_name)
+							}
+							es wcs_keysetvalue server_var(wcs_id) "race" server_var(wcs_raceid)
+							es_xdoblock wcs/wcsfunctions/wcs_playercheck
+							es wcs_getplayer event_var(userid)
+							es_xset wcs_text 0
+							wcs_getlanguage "wcs_lng" "wcs_lng_changedrace"
+							es_format wcs_text "#lightgreen%1: #green%2" server_var(wcs_lng) server_var(wcs_racename)
+							es_tell event_var(userid) #multi server_var(wcs_text)
+							// refresh skills
+							es_keysetvalue "wcsuserdata" event_var(userid) "skillcheck" "1"
+							// unrestrict all (required for predator)
+							es wcs_xrestrict allow event_var(userid) #all
+							// reset the limited flag
+							es_keysetvalue "wcsuserdata" event_var(userid) "limitedrace" "0"
+						}
+					}
+					es_xelse do
+					{
+						es_math wcs_total_level - server_var(wcs_maxlevel)
+						wcs_getlanguage "wcs_lng" "wcs_lng_overmaxlevel"
+						es_format wcs_text server_var(wcs_lng) server_var(wcs_racename) server_var(wcs_total_level)
+						es_tell event_var(userid) #multi server_var(wcs_text)
+					}
+				}
+				es_xelse do
+				{
+					es_math wcs_requiredlevel - server_var(wcs_total_level)
+					wcs_getlanguage "wcs_lng" "wcs_lng_notreqlevel"
+					es_format wcs_text server_var(wcs_lng) server_var(wcs_racename) server_var(wcs_requiredlevel)
+					es_tell event_var(userid) #multi server_var(wcs_text)
+				}
+			}
+		}
+	}
+	// set page to 0 if race selected
+	if (event_var(commandstring) != "9") then es_xif (event_var(commandstring) != "8") then es_xkeysetvalue wcsuserdata event_var(userid) menu 0
+	if (server_var(wcs_debug) = "1") then echo wcs_race_handle end
+}
+
+// <<<<<<<<<<<<<<<<< END RACE MENU <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+

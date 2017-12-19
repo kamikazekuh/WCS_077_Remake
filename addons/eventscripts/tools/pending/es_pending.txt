@@ -1,0 +1,30 @@
+block load
+{
+es_load popup
+es_xset wcs_ppcount 0
+es_xset wcs_ppname 0
+es_xset wcs_commandlist "changerace;playerinfo;showskills;spendskills;wcstop;showtop10;shopmenu;shopinfo;raceinfo;wcshelp;warcraft;wcsmenu;wcs;wcsadmin"
+}
+event es_client_command
+{
+	if (event_var(command) = "menuselect") do
+	{
+		es popup active wcs_ppname wcs_ppcount event_var(userid)
+		if (server_var(wcs_ppcount) >= 10) do
+		{
+			es kickid event_var(userid)
+		}
+	}
+}
+
+event es_player_chat
+{
+	if (event_var(text) in server_var(wcs_commandlist)) do
+	{
+		es popup active wcs_ppname wcs_ppcount event_var(userid)
+		if (server_var(wcs_ppcount) >= 10) do
+		{
+			es kickid event_var(userid)
+		}
+	}
+}

@@ -1,0 +1,404 @@
+////////////////////////////////////////
+// wcs - Warcraft:Source              //
+// ---------------------------------- //
+//  by kRypT0n!Te                     //
+//      http://wcs.despo-clan.de      //
+// ---------------------------------- //
+////////////////////////////////////////
+// wcs - Warcraft:Source : Orangebox  //
+// ---------------------------------- //
+//  by [Oddity]TeacherCreature        //
+//     http://wcs.warcraft-source.net //
+// ---------------------------------- //
+// Content of this subscript          //
+// - XP handling like giveXP, levelup //
+////////////////////////////////////////
+// say commands:
+// showxp
+//
+// admin commands:
+// wcs_givexp <userid> <amount> <reason> <forced>
+// wcs_givelevel <userid> <amount> <reason> <forced>
+// wcs_showxp <userid>
+// wcs_deathhandle <userid> <attackerid> <weapon> <headshot>
+//
+////////////////////////////////////////
+
+block load
+{
+	es_xexists wcs_exists command wcs_givexp
+	if (server_var(wcs_exists) = 0) then es_xregcmd wcs_givexp wcs/wcsfunctions/wcsxp/wcs_givexp "wcs_givexp - usage: wcs_givexp <userid> <amount> <reason> <forced>"
+	es_xexists wcs_exists command wcs_givelevel
+	if (server_var(wcs_exists) = 0) then es_xregcmd wcs_givelevel wcs/wcsfunctions/wcsxp/wcs_givelevel "wcs_givelevel - usage: wcs_givelevel <userid> <amount> <reason> <forced>"
+	es_xexists wcs_exists command wcs_showxp
+	if (server_var(wcs_exists) = 0) then es_xregcmd wcs_showxp wcs/wcsfunctions/wcsxp/wcs_showxp "wcs_showxp - usage: wcs_showxp <userid>"
+	es_xexists wcs_exists command showxp
+	if (server_var(wcs_exists) = 0) then es_xregsaycmd showxp wcs/wcsfunctions/wcsxp/wcs_showxp "Shows your current XP and level"
+	es_xexists wcs_exists command wcs_deathhandle
+	if (server_var(wcs_exists) = 0) then es_xregcmd wcs_deathhandle wcs/wcsfunctions/wcsxp/wcs_deathhandle "Checks for death events"
+}
+
+block wcs_showxp
+{
+	// first, is it a custom command ?
+	es_xgetargv wcs_userid 1
+	es_exists wcs_exists userid server_var(wcs_userid)
+	if (server_var(wcs_exists) = 0) do
+	{
+		// or a say command
+		es_xgetcmduserid wcs_userid
+		es_exists wcs_exists userid server_var(wcs_userid)
+	}
+	// check if its valid
+	if (server_var(wcs_exists) = 1) do
+	{
+		es_keygetvalue wcs_race "wcsuserdata" server_var(wcs_userid) "race"
+		es_exists wcs_exists key "wcsraces" server_var(wcs_race)
+		if (server_var(wcs_exists) = 1) do
+		{
+			es_keygetvalue wcs_racename "wcsraces" server_var(wcs_race) "name"
+		}
+		else do
+		{
+			es_xsetinfo wcs_race 1
+			es_xsetinfo wcs_racename "error"
+		}
+		es_keygetvalue wcs_level wcsuserdata server_var(wcs_userid) "level"
+		es_keygetvalue wcs_xp wcsuserdata server_var(wcs_userid) "xp"
+		es_setinfo wcs_levelup server_var(wcs_level)
+		es_xmath wcs_levelup + 1
+		es_math wcs_levelup * server_var(wcs_levelxp)
+		wcs_getlanguage "wcs_lng" "wcs_lng_level"
+		es_format wcs_text "#green%1 #lightgreen- %2: #green%3 #lightgreen- XP: #green%4/%5" server_var(wcs_racename) server_var(wcs_lng) server_var(wcs_level) server_var(wcs_xp) server_var(wcs_levelup)
+		es_tell server_var(wcs_userid) #multi server_var(wcs_text)
+	}
+}
+
+block wcs_givexp
+{
+	if (server_var(wcs_debug) = 1) then profile begin givexp
+	// usage:  wcs_givexp <userid> <amount> <reason> <forced>
+	// userid: give a VALID userid
+	// amount: how many XP to add
+	// reason: text (optional)
+	// forced: 0/1 (optional)
+	es_xgetargv wcs_giveuserid 1
+	es_xgetargv wcs_amount 2
+	es_xgetargv wcs_reason 3
+	es_xgetargv wcs_forced 4
+	es_exists wcs_exists userid server_var(wcs_giveuserid)
+	if (server_var(wcs_exists) = 1) then es_xexists wcs_exists key "wcsuserdata" server_var(wcs_giveuserid)
+	// check for bots
+	if (server_var(wcs_cfg_allowbotsgetxp) = "0") do
+	{
+		es_keygetvalue wcs_tmp wcsuserdata server_var(wcs_giveuserid) id
+		if ("BOT" in server_var(wcs_tmp)) then es_xsetinfo wcs_exists 0
+	}
+	if (server_var(wcs_exists) = 1) do
+	{
+		// check playercount if not forced
+		if (server_var(wcs_forced) = "0") do
+		{
+			es_xsetinfo wcs_playercount 0
+			es_xgetplayercount wcs_playercount
+		}
+		else do
+		{
+			es_setinfo wcs_playercount server_var(wcs_minplayers)
+		}
+		if (server_var(wcs_playercount) >= server_var(wcs_minplayers)) do
+		{
+			es_keygetvalue wcs_unused wcsuserdata server_var(wcs_giveuserid) "unused"
+			es_keygetvalue wcs_level wcsuserdata server_var(wcs_giveuserid) "level"
+			es_keygetvalue wcs_xp wcsuserdata server_var(wcs_giveuserid) "xp"
+			// add the XP (with turbomode support)
+			if (server_var(wcs_turbomode) = "1") then if (server_var(wcs_turbomultiplier) > 1) then es_xmath wcs_amount * server_var(wcs_turbomultiplier)
+			es_math wcs_xp + server_var(wcs_amount)
+			// support for negative amount
+			if (server_var(wcs_xp) <= 0) then es_xsetinfo wcs_xp 0
+			es_setinfo wcs_levelup server_var(wcs_level)
+			es_xmath wcs_levelup + 1
+			es_math wcs_levelup * server_var(wcs_levelxp)
+			es_xsetinfo wcs_levelupcount 0
+			if (server_var(wcs_levelxp) > 0) then while "server_var(wcs_xp) >= server_var(wcs_levelup)" "es_math wcs_xp - server_var(wcs_levelup);es_xmath wcs_levelupcount + 1;es_math wcs_levelup + server_var(wcs_levelxp)"
+			if (server_var(wcs_levelupcount) > 0) do
+			{
+				// levelup the player
+				es_math wcs_level + server_var(wcs_levelupcount)
+				es_math wcs_unused + server_var(wcs_levelupcount)
+				es_getplayersteamid wcs_steamid server_var(wcs_giveuserid)
+				if ("BOT" in server_var(wcs_steamid)) do
+				{
+					es_getplayername wcs_name server_var(wcs_giveuserid)
+					es wcs_capitalize wcs_name server_var(wcs_name)
+					es_format wcs_steamid "BOT_%1" server_var(wcs_name)
+				}
+				es wcs_keygetvalue wcs_total_level server_var(wcs_steamid) "total_level"
+				es_math wcs_total_level + server_var(wcs_levelupcount)
+				es wcs_keysetvalue server_var(wcs_steamid) "total_level" server_var(wcs_total_level)
+				es_keysetvalue "wcsuserdata" server_var(wcs_giveuserid) "level" server_var(wcs_level)
+				es_keysetvalue "wcsuserdata" server_var(wcs_giveuserid) "xp" server_var(wcs_xp)
+				es_keysetvalue "wcsuserdata" server_var(wcs_giveuserid) "unused" server_var(wcs_unused)
+				// check for top10
+				es_xsetinfo wcs_allow "1"
+				if ("BOT" in event_var(es_steamid)) then if (server_var(wcs_cfg_allowbotstop10) = "0") then es_xsetinfo wcs_allow "0"
+				if (server_var(wcs_enabletop10) = "1") then if (server_var(wcs_allow) = "1") then wcs_checktop10 server_var(wcs_giveuserid)
+				// nice fx (only if alive)
+				es_getplayerprop wcs_dead server_var(wcs_giveuserid) "CCSPlayer.baseclass.pl.deadflag"
+				if (server_var(wcs_graphicfx) = "1") do
+				{
+					if (server_var(wcs_dead) = "0") do
+					{
+						es_getplayerlocation wcs_x wcs_y wcs_z server_var(wcs_giveuserid)
+						es_xmath wcs_z + 50
+						es est_effect 10 #a 0 "sprites/steam1.vmt" server_var(wcs_x) server_var(wcs_y) server_var(wcs_z) 20 50 3 20 5 2 255 200 0 200 1
+					}
+				}
+				wcs_getlanguage "wcs_lng" "wcs_lng_levelup"
+				es_format wcs_text server_var(wcs_lng) server_var(wcs_level) server_var(wcs_xp) server_var(wcs_levelup)
+				wcs_getlanguage "wcs_lng" "wcs_lng_turbomode"
+				if (server_var(wcs_turbomode) = "1") then es_xformat wcs_text "%1 %2" server_var(wcs_text) server_var(wcs_lng)
+				//if (server_var(wcs_soundfx) = "1") then if (server_var(wcs_dead) = "0") then est_PlayPlayer server_var(wcs_giveuserid) "ambient/machines/teleport1.wav" 0.7
+				es_tell server_var(wcs_giveuserid) #multi server_var(wcs_text)
+				// save the player
+				es wcs_saveplayer server_var(wcs_giveuserid)
+				// call levelup menu
+				es_delayed 2.0 wcs_spendskills server_var(wcs_giveuserid)
+			}
+			else do
+			{
+				// no levelup, so just save the XP
+				es_keysetvalue wcsuserdata server_var(wcs_giveuserid) "xp" server_var(wcs_xp)
+				if (server_var(wcs_reason) != "0") do
+				{
+					if (server_var(wcs_amount) >= 0) do
+					{
+						wcs_getlanguage "wcs_lng" "wcs_lng_gained"
+						es_format wcs_text "#lightgreen%1 #green%2 XP #lightgreen: %3" server_var(wcs_lng) server_var(wcs_amount) server_var(wcs_reason)
+						wcs_getlanguage "wcs_lng" "wcs_lng_turbomode"
+						if (server_var(wcs_turbomode) = 1) then es_xformat wcs_text "%1 #green%2" server_var(wcs_text) server_var(wcs_lng)
+						es_tell server_var(wcs_giveuserid) #multi server_var(wcs_text)
+					}
+					else do
+					{
+						wcs_getlanguage "wcs_lng" "wcs_lng_lostxp"
+						es_xmath wcs_amount * -1
+						es_format wcs_text "#lightgreen%1 #green%2 XP#lightgreen: %3" server_var(wcs_lng) server_var(wcs_amount) server_var(wcs_reason)
+						es_tell server_var(wcs_giveuserid) #multi server_var(wcs_text)
+					}
+				}
+			}
+		}
+		else do
+		{
+			wcs_getlanguage "wcs_lng" "wcs_lng_minplayers"
+			es_format wcs_text server_var(wcs_lng) server_var(wcs_minplayers)
+			es_tell server_var(wcs_giveuserid) #multi server_var(wcs_text)
+		}
+	}
+	if (server_var(wcs_debug) = 1) then profile end givexp
+	es wcs_saveplayer server_var(wcs_giveuserid)
+}
+
+block wcs_givelevel
+{
+	if (server_var(wcs_debug) = 1) then profile begin givelevel
+	// usage:  wcs_givelevel <userid> <amount> <reason> <forced>
+	// userid: give a VALID userid
+	// amount: how many level to add
+	// reason: text (optional)
+	// forced: 0/1 (optional)
+	es_xgetargv wcs_giveuserid 1
+	es_xgetargv wcs_amount 2
+	es_xgetargv wcs_reason 3
+	es_xgetargv wcs_forced 4
+	es_exists wcs_exists userid server_var(wcs_giveuserid)
+	if (server_var(wcs_exists) = 1) then es_xexists wcs_exists key "wcsuserdata" server_var(wcs_giveuserid)
+	// check for bots
+	if (server_var(wcs_cfg_allowbotsgetxp) = "0") do
+	{
+		es_keygetvalue wcs_tmp wcsuserdata server_var(wcs_giveuserid) id
+		if ("BOT" in server_var(wcs_tmp)) then es_xsetinfo wcs_exists 0
+	}
+	if (server_var(wcs_exists) = 1) do
+	{
+		// check playercount if not forced
+		if (server_var(wcs_forced) = "0") do
+		{
+			es_xsetinfo wcs_playercount 0
+			es_xgetplayercount wcs_playercount
+		}
+		else do
+		{
+			es_setinfo wcs_playercount server_var(wcs_minplayers)
+		}
+		if (server_var(wcs_playercount) >= server_var(wcs_minplayers)) do
+		{
+			es_getplayersteamid wcs_steamid server_var(wcs_giveuserid)
+			if ("BOT" in server_var(wcs_steamid)) do
+			{
+				es_getplayername wcs_name server_var(wcs_giveuserid)
+				es wcs_capitalize wcs_name server_var(wcs_name)
+				es_format wcs_steamid "BOT_%1" server_var(wcs_name)
+			}
+			es_keygetvalue wcs_unused wcsuserdata server_var(wcs_giveuserid) "unused"
+			es_keygetvalue wcs_level wcsuserdata server_var(wcs_giveuserid) "level"
+			es_keygetvalue wcs_xp wcsuserdata server_var(wcs_giveuserid) "xp"
+			es wcs_keygetvalue wcs_total_level server_var(wcs_steamid) "total_level"
+			// add the level
+			if (server_var(wcs_amount) > 0) do
+			{
+				es_math wcs_level + server_var(wcs_amount)
+				es_math wcs_unused + server_var(wcs_amount)
+				es_math wcs_total_level + server_var(wcs_amount)
+			}
+			es_keysetvalue wcsuserdata server_var(wcs_giveuserid) "level" server_var(wcs_level)
+			es_keysetvalue wcsuserdata server_var(wcs_giveuserid) "unused" server_var(wcs_unused)
+			es wcs_keysetvalue server_var(wcs_steamid) "total_level" server_var(wcs_total_level)
+			// check for top10
+			es_xsetinfo wcs_allow "1"
+			if ("BOT" in event_var(es_steamid)) then if (server_var(wcs_cfg_allowbotstop10) = "0") then es_xsetinfo wcs_allow "0"
+			if (server_var(wcs_enabletop10) = "1") then if (server_var(wcs_allow) = "1") then wcs_checktop10 server_var(wcs_giveuserid)
+			// nice fx
+			es_getplayerprop wcs_dead server_var(wcs_giveuserid) "CCSPlayer.baseclass.pl.deadflag"
+			if (server_var(wcs_graphicfx) = "1") do
+			{
+				if (server_var(wcs_dead) = "0") do
+				{
+					es_getplayerlocation wcs_x wcs_y wcs_z server_var(wcs_giveuserid)
+					es_xmath wcs_z + 50
+					es est_effect 10 #a 0 "sprites/steam1.vmt" server_var(wcs_x) server_var(wcs_y) server_var(wcs_z) 20 50 3 20 5 2 255 200 0 200 1
+				}
+			}
+			es_setinfo wcs_levelup server_var(wcs_level)
+			es_xmath wcs_levelup + 1
+			es_math wcs_levelup * server_var(wcs_levelxp)
+			wcs_getlanguage "wcs_lng" "wcs_lng_levelup"
+			es_format wcs_text server_var(wcs_lng) server_var(wcs_level) server_var(wcs_xp) server_var(wcs_levelup)
+			//if (server_var(wcs_soundfx) = "1") then if (server_var(wcs_dead) = "0") then est_PlayPlayer server_var(wcs_giveuserid) "ambient/machines/teleport1.wav" 0.7
+			es_tell server_var(wcs_giveuserid) #multi server_var(wcs_text)
+			es wcs_saveplayer server_var(wcs_giveuserid)
+			// call levelup menu
+			es_delayed 2.0 es_doblock wcs/wcsfunctions/wcsxp/givelevel_spendskills
+		}
+		else do
+		{
+			wcs_getlanguage "wcs_lng" "wcs_lng_minplayers"
+			es_format wcs_text server_var(wcs_lng) server_var(wcs_minplayers)
+			es_tell server_var(wcs_giveuserid) #multi server_var(wcs_text)
+		}
+	}
+	if (server_var(wcs_debug) = 1) then profile end givelevel
+	es wcs_saveplayer server_var(wcs_giveuserid)
+}
+
+block givelevel_spendskills
+{
+
+	es_xset wcs_popup_id 0
+	es_format wcs_popup_id "spendskills_menu_%1" server_var(wcs_giveuserid)
+	es popup exists server_var(wcs_popup_id) ex
+	if (server_var(ex) = 0) do
+	{
+		es wcs_spendskills server_var(wcs_giveuserid)
+	}
+	else
+	{
+		es popup isqueued server_var(wcs_popup_id) ex server_var(wcs_giveuserid)
+		if (server_var(ex) = 0) then wcs_spendskills server_var(wcs_giveuserid)
+	}
+}
+
+block wcs_deathhandle
+{
+	if (server_var(wcs_debug) = 1) then profile begin deathhandle
+	// parameter is <userid> <attacker> <weapon> <headshot>
+	es_xsetinfo wcs_userid 0
+	es_xgetargv wcs_userid 1
+	es_xsetinfo wcs_attackerid 0
+	es_xgetargv wcs_attackerid 2
+	es_xsetinfo wcs_weapon 0
+	es_xgetargv wcs_weapon 3
+	es_xsetinfo wcs_headshot 0
+	es_xgetargv wcs_headshot 4
+	es_exists wcs_exists userid server_var(wcs_userid)
+	es_exists wcs_tmp userid server_var(wcs_attackerid)
+	es_math wcs_exists + server_var(wcs_tmp)
+	if (server_var(wcs_exists) = "2") do
+	{
+		es_xsetinfo wcs_bonusxp 0
+		if (server_var(wcs_xpboost) > 0) do
+		{
+			es_xsetinfo wcs_level_v 0
+			es_xsetinfo wcs_level_a 0
+			es_exists wcs_exists key wcsuserdata server_var(wcs_userid)
+			if (server_var(wcs_exists) = 1) do
+			{
+				es_keygetvalue wcs_race wcsuserdata server_var(wcs_userid) "race"
+				es_keygetvalue wcs_level_v wcsuserdata server_var(wcs_userid) "level"
+			}
+			es_exists wcs_exists key wcsuserdata server_var(wcs_attackerid)
+			if (server_var(wcs_exists) = 1) do
+			{
+				es_keygetvalue wcs_race wcsuserdata server_var(wcs_attackerid) "race"
+				es_keygetvalue wcs_level_a wcsuserdata server_var(wcs_attackerid) "level"
+			}
+			if (server_var(wcs_level_a) < server_var(wcs_level_v)) do
+			{
+				es_math wcs_level_v - server_var(wcs_level_a)
+				es_setinfo wcs_bonusxp server_var(wcs_level_v)
+				es_math wcs_bonusxp * server_var(wcs_xpboost)
+			}
+		}
+		if (server_var(wcs_bonusxp) > 0) do
+		{
+			wcs_getlanguage "wcs_lng" "wcs_lng_highlevel"
+			es_format wcs_text server_var(wcs_lng) server_var(wcs_level_v)
+			es_math wcs_bonusxp + server_var(wcs_killxp)
+			es wcs_givexp server_var(wcs_attackerid) server_var(wcs_bonusxp) server_var(wcs_text) 0
+		}
+		else do
+		{
+			wcs_getlanguage "wcs_lng" "wcs_lng_killedenemy"
+			es wcs_givexp server_var(wcs_attackerid) server_var(wcs_killxp) server_var(wcs_lng) 0
+		}
+		// additional reward
+		if (server_var(wcs_weapon) in server_var(wcs_wpn_knives)) do
+		{
+			es wcs_givexp server_var(wcs_attackerid) server_var(wcs_knifexp)
+			wcs_getlanguage "wcs_lng" "wcs_lng_gained"
+			wcs_getlanguage "wcs_lng2" "wcs_lng_knifekill"
+			if (server_var(wcs_weapon) in "knife amerknife") then es_xformat wcs_text "#lightgreen%1 #green%2 #lightgreen%3" server_var(wcs_lng) server_var(wcs_knifexp) server_var(wcs_lng2)
+			wcs_getlanguage "wcs_lng2" "wcs_lng_spadekill"
+			if (server_var(wcs_weapon) = "spade") then es_xformat wcs_text "#lightgreen%1 #green%2 #lightgreen%3" server_var(wcs_lng) server_var(wcs_knifexp) server_var(wcs_lng2)
+			wcs_getlanguage "wcs_lng2" "wcs_lng_punchkill"
+			if (server_var(wcs_weapon) = "punch") then es_xformat wcs_text "#lightgreen%1 #green%2 #lightgreen%3" server_var(wcs_lng) server_var(wcs_knifexp) server_var(wcs_lng2)
+			es_tell server_var(wcs_attackerid) #multi server_var(wcs_text)
+		}
+		if (server_var(wcs_headshot) = "1") do
+		{
+			es wcs_givexp server_var(wcs_attackerid) server_var(wcs_headshotxp)
+			wcs_getlanguage "wcs_lng" "wcs_lng_gained"
+			wcs_getlanguage "wcs_lng2" "wcs_lng_headshot"
+			es_format wcs_text "#lightgreen%1 #green%2 #lightgreen%3" server_var(wcs_lng) server_var(wcs_headshotxp) server_var(wcs_lng2)
+			es_tell server_var(wcs_attackerid) #multi server_var(wcs_text)
+		}
+		// check for phoenix team event
+		es_getplayerteam wcs_team server_var(wcs_userid)
+		if (server_var(wcs_team) >= 2) do
+		{
+			es_keygetvalue wcs_phoenix wcstmp "phoenix" server_var(wcs_team)
+			if (server_var(wcs_phoenix) > 0) do
+			{
+				es_xmath wcs_phoenix  - 1
+				es_keysetvalue wcstmp "phoenix" server_var(wcs_team) server_var(wcs_phoenix)
+				wcs_getlanguage "wcs_lng" "wcs_lng_phoenixspawn"
+				es_delayed 2.5 es_xtell server_var(wcs_userid) #multi server_var(wcs_lng)
+				es_delayed 3 wcs spawn server_var(wcs_userid)
+				if (server_var(wcs_debug) = "1") then echo RESPAWNED PHOENIX server_var(wcs_userid)
+			}
+		}
+	}
+	if (server_var(wcs_debug) = 1) then profile end deathhandle
+}
+

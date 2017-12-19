@@ -1,0 +1,144 @@
+wcs_config
+{
+"config"
+{
+// #############################################
+// ### EDIT THIS PART FOR YOUR CUSTOM SERVER ###
+// #############################################
+
+
+  // language of the most messages ingame (atm supported: "en" "de")
+  "wcs_language" "en"
+
+  // welcome text (set "0" to deactivate), delay of 10 seconds (limit: 70 chars)
+  "wcs_welcometext" "1"
+  // welcome gui text (limit: 480 chars), delay of 5 seconds
+  "wcs_welcomeguitext" "1"
+  // spawn text, showed up every round. Good for new servers with WCS beginners. Set 0 to disable
+  "wcs_spawntext" "0"
+  // if a player reaches this level, no welcome/gui/spawn text will appear
+  "wcs_cfg_disabletextonlvl" "20"
+
+  // ADMINS ARE NOW IN A NEW FILE: WCSadmin/es_WCSadmin_db.txt !!!!!!!
+  //"wcs_admins" "<STEAM_ID_LAN> <127.0.0.1> <STEAM_0:1:5818184>"
+
+  // You need to enable SQL support, TXT file support or BOTH. But you should not disable both.
+  // enable SQL, you need a local or remote MySQL server (setup in WCSsql/es_WCSsql.txt)
+  "wcs_cfg_enablesql" "0"
+  // save players in local .txt file
+  "wcs_cfg_enabletxtfile" "1"
+
+  // how many players are required to gain XP
+  "wcs_minplayers" "0"
+
+  // should friendlyfire be set to 0 (checked on mapstart)
+  "wcs_friendlyfire" "0"
+
+  // how many XP is required to levelup (level * xp)
+  "wcs_levelxp" "10"
+  
+  // XP-boost, this additional XP is given for EACH LEVEL when killing a higher level enemy (set 0 to disable)
+  "wcs_xpboost" "9"
+
+  // Turbo XP mode, but ranks are not saved !! (Reset every mapchange, no save/load, no top10)
+  "wcs_turbomode" "0"
+  "wcs_turbomultiplier" "5"
+  
+  // Save XP every X rounds (only good for an unstable server or 24/7 map server)
+  "wcs_cfg_savexpround" "10"
+  
+  // limit strong races only for high-level players ? / specific people ?
+  "wcs_cfg_requiredlevel" "1"
+  "wcs_cfg_restrictedrace" "1"
+  "wcs_cfg_maxracelevel" "1"
+
+  // enable top10 ranking
+  "wcs_enabletop10" "1"
+
+  // gained XP
+  "wcs_killxp" "30"             // standard kill
+  "wcs_knifexp" "40"            // knife kill (also spade and punch in DOD:S)
+  "wcs_plantxp" "15"            // planted the bomb
+  "wcs_explodexp" "15"          // bomb exploded
+  "wcs_defusexp" "30"           // bomb defused
+  // CS:S only
+  "wcs_headshotxp" "15"         // headshot !
+  "wcs_hostagexp" "5"           // rescued a hostage
+  // DOD:S only
+  "wcs_tickcredits" "100"       // for each tick
+  "wcs_roundwoncredits" "5000"  // for a won round, for each player
+
+  // ultimate level requirement
+  "wcs_ultimatelevel" "8"
+  
+  // after this time (plus freezetime), ultimates can be used
+  "wcs_cfg_ulti_warmup" "10"
+
+  // global level handling (like v2.0.x), so all races are on the same level !
+  "wcs_cfg_globallevel" "0"
+  
+  // help for new players, give that levels
+  "wcs_cfg_newplayerbonus" "10"
+  
+  // shotgun penalty, give that value in % less chance to activate player_hurt skills
+  "wcs_cfg_shotgunchance" "30"
+
+  // should showskills give details like skillsinfo ? (good for new servers)
+  "wcs_showskills_details" "0"
+  
+  //changerace details for each race
+  "wcs_cfg_changeracedetails" "1"
+  
+  // enable race team limit
+  "wcs_cfg_enableraceteamlimit" "1"
+  // force players with a limited race to spec
+  "wcs_cfg_limitedraceforcespec" "0"
+  
+  // annouce top10 changes
+  "wcs_cfg_top10announce" "1"
+  
+  // take XP on using "resetskills", number in percent of current level XP
+  "wcs_cfg_resetskillspenalty" "10"
+  
+  // bot settings
+  // May bots get XP and levelup ?
+  "wcs_cfg_allowbotsgetxp" "1"
+  // Can players get XP by killing bots ?
+  "wcs_cfg_allowbotsreward" "1"
+  // allow bots to rule the top10 ?
+  "wcs_cfg_allowbotstop10" "0"
+
+  // show sound and graphic effects, disable if you got trouble or don't like it (effects on levelup and skills)
+  "wcs_soundfx" "1"
+  "wcs_graphicfx" "1"
+  // show flash effects when skills are used
+  "wcs_cfg_skillflash" "0"
+  
+  // show total player count (will cause buffer overflow on large database!!)
+  "wcs_showtotalplayers" "0"
+
+  // noskywalking - another teleport method, to avoid skywalking and wall-hiding - recommended 1 !
+  "wcs_noskywalking" "1"
+  
+  // set this to 1 if you want explode effects (e.g. Suicide Bomber) to inflict friendly players in range
+  "wcs_cfg_friendlyexplosion" "0"
+
+  // autocleanup - will cleanup if your server reaches 6000 players. Recommended if you suppose to reach that value !!
+  // its also important to set a correct deletedays, recommended is 7 or 14 days
+  "wcs_autocleanup" "0"
+  // delete player after X days of inactivity ! [ 7 = default ]
+  "wcs_deletedays" "7"
+  
+  // disable feedback/support formular
+  "wcs_nofeedback" "0"
+  
+  // disable the shopmenu and give XP instead of credits, you will get XP like 10% of the credits amount (DOD:S only !!)
+  "wcs_cfg_dods_noshopmenu" "0"
+  
+  // disable the whole shopmenu
+  "wcs_cfg_noshopmenu" "0"
+  
+  //just for check - DON'T MODIFY
+  "wcs_cfg_set" "1"
+}
+}

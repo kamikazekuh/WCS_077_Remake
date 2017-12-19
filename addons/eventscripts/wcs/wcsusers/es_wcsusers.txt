@@ -1,0 +1,530 @@
+////////////////////////////////////////
+// wcs - Warcraft:Source              //
+// ---------------------------------- //
+//  by kRypT0n!Te                     //
+//      http://wcs.despo-clan.de      //
+// ---------------------------------- //
+////////////////////////////////////////
+// wcs - Warcraft:Source : Orangebox  //
+// ---------------------------------- //
+//  by [Oddity]TeacherCreature        //
+//     http://wcs.warcraft-source.net //
+// ---------------------------------- //
+// Content of this subscript          //
+// - playerinfo                       //
+// - showskills                       //
+// - spendskills                      //
+// - resetskills                      //
+////////////////////////////////////////
+// say commands:
+// playerinfo, showskills
+// spendskills, resetskills
+//
+// admin commands:
+// wcs_spendskills <userid>
+// wcs_showplayerinfo <userid>
+// wcs_showskills <userid>
+// wcs_resetskills <userid>
+//
+////////////////////////////////////////
+
+block load
+{
+	es_xset wcs_steamid 0
+	es_xset wcs_mskilllevel 0
+	es_xexists wcs_exists command playerinfo
+	if (server_var(wcs_exists) = 0) then es_xregsaycmd playerinfo wcs/wcsusers/wcs_showplayerinfo "Shows detail info about the players"
+	es_xexists wcs_exists command resetskills
+	if (server_var(wcs_exists) = 0) then es_xregsaycmd resetskills wcs/wcsusers/wcs_resetskills "Reset your skills"
+	es_xexists wcs_exists command showskills
+	if (server_var(wcs_exists) = 0) then es_xregsaycmd showskills wcs/wcsusers/wcs_showskills "Shows your skills levels"
+	es_xexists wcs_exists command spendskills
+	if (server_var(wcs_exists) = 0) then es_xregsaycmd spendskills wcs/wcsusers/wcs_spendskills "Lets you spend skill points"
+	es_xexists wcs_exists command wcs_showskills
+	if (server_var(wcs_exists) = 0) then es_xregcmd wcs_showskills wcs/wcsusers/wcs_showskills "Shows your skills levels"
+	es_xexists wcs_exists command wcs_spendskills
+	if (server_var(wcs_exists) = 0) then es_xregcmd wcs_spendskills wcs/wcsusers/wcs_spendskills "wcs_spendskills - usage: wcs_spendskills <userid>"
+	es_xexists wcs_exists command wcs_resetskills
+	if (server_var(wcs_exists) = 0) then es_xregcmd wcs_resetskills wcs/wcsusers/wcs_resetskills "Reset your skills"
+	es_xexists wcs_exists command wcs_showplayerinfo
+	if (server_var(wcs_exists) = 0) then es_xregcmd wcs_showplayerinfo wcs/wcsusers/wcs_showplayerinfo "Shows detail info about players"
+	es_xexists wcs_exists command showcredits
+	if (server_var(wcs_exists) = 0) then es_xregsaycmd showcredits wcs/wcsusers/wcs_showcredits "Shows your credits (DOD:S only)"
+	if (server_var(wcs_turbomode) = "1") do
+	{
+		es_xsetinfo wcs_showtotalplayers 0
+		es_xsetinfo wcs_enabletop10 0
+	}
+	if (server_var(wcs_showtotalplayers) = "1") do
+	{
+		es_xsetinfo wcs_totalplayers 0
+		es wcs_foreachkey wcs_key "es_xmath wcs_totalplayers + 1" 
+		es echo "Total players : " server_var(wcs_totalplayers)
+	}
+	es_keygroupcreate "wcsuserdata"
+}
+
+block unload
+{
+	es_keygroupdelete "wcsuserdata"
+}
+
+
+event player_disconnect
+{
+	es_exists wcs_exists key "wcsuserdata" event_var(userid)
+	if (server_var(wcs_exists) = "1") do
+	{
+		es wcs_saveplayer event_var(userid)
+		es_keydelete "wcsuserdata" event_var(userid)
+	}
+}
+
+
+// >>>>>>>>>>>>>>>>> PLAYERINFO >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+block wcs_showplayerinfo
+{
+	if (server_var(wcs_debug) = "1") then echo wcs_showplayerinfo start
+	es_xsetinfo wcs_userid 0
+	es_xgetargv wcs_userid 1
+	es_exists wcs_exists userid server_var(wcs_userid)
+	if (server_var(wcs_exists) = 0) do
+	{
+		es_xgetcmduserid wcs_userid
+		es_exists wcs_exists userid server_var(wcs_userid)
+		es wcs_menuzero server_var(wcs_userid)
+	}
+	if (server_var(wcs_exists) = "1") do
+	{
+		es_keysetvalue "wcsuserdata" server_var(wcs_userid) "menu" "playerinfo"
+		es_keygetvalue wcs_page "wcsuserdata" server_var(wcs_userid) "page"
+		es_xmath wcs_page + 1
+		es_keysetvalue "wcsuserdata" server_var(wcs_userid) page server_var(wcs_page)
+		es_xsetinfo wcs_upper 7
+		es_xsetinfo wcs_lower 0
+		es_math wcs_upper * server_var(wcs_page)
+		es_xcopy wcs_lower wcs_upper
+		es_xmath wcs_lower - 7
+		es_xsetinfo wcs_counter 1
+		es_xsetinfo wcs_playercount 0
+		es_format wcs_text "%1 %2\n " server_var(wcs_lng_page) server_var(wcs_page)
+		es_foreachkey wcs_key in wcsuserdata "if(server_var(wcs_counter) > server_var(wcs_lower)) then if (server_var(wcs_counter) <= server_var(wcs_upper)) then es_xdoblock wcs/wcsusers/wcs_playerinfo;es_xmath wcs_counter + 1"
+		es_format wcs_text "%1\n \n" server_var(wcs_text)
+		if (server_var(wcs_page) > 1) then es_xformat wcs_text "%1\n->8. %2" server_var(wcs_text) server_var(wcs_lng_back)
+		if (server_var(wcs_counter) > server_var(wcs_upper)) then es_xformat wcs_text "%1\n->9. %2" server_var(wcs_text) server_var(wcs_lng_next)
+		es_format wcs_text "%1\n->0. %2" server_var(wcs_text) server_var(wcs_lng_exit)
+		es_strlen wcs_strlen server_var(wcs_text)
+		if (server_var(wcs_strlen) > 1) then es_xmenu 0 server_var(wcs_userid) server_var(wcs_text)
+	}
+	if (server_var(wcs_debug) = "1") then echo wcs_showplayerinfo end
+}
+
+block wcs_playerinfo
+{
+	es_exists wcs_exists userid server_var(wcs_key)
+	if (server_var(wcs_exists) = "1") do
+	{
+		es_xmath wcs_playercount + 1
+		es_getplayername wcs_name server_var(wcs_key)
+		es_format wcs_text "%1\n->%2. %3 " server_var(wcs_text) server_var(wcs_playercount) server_var(wcs_name)
+	}
+}
+
+block wcs_playerinfo_details
+{
+	if (server_var(wcs_debug) = "1") then echo wcs_playerinfo_details start
+	es_exists wcs_exists userid server_var(wcs_key)
+	if (server_var(wcs_exists) = 1) do
+	{
+		es_getplayersteamid wcs_steamid server_var(wcs_key)
+		es_keygetvalue wcs_race "wcsuserdata" server_var(wcs_key) "race"
+		es_keygetvalue wcs_level "wcsuserdata" server_var(wcs_key) "level"
+		es_getplayername wcs_name server_var(wcs_key)
+		es_keygetvalue wcs_racename "wcsraces" server_var(wcs_race) "name"
+		if ("BOT" in server_var(wcs_steamid)) do
+		{
+			es_getplayername wcs_name server_var(wcs_key)
+			es wcs_capitalize wcs_name server_var(wcs_name)
+			es_format wcs_steamid "BOT_%1" server_var(wcs_name)
+		}
+		es wcs_keygetvalue wcs_total_level server_var(wcs_steamid) total_level
+		es_keygetvalue wcs_numberofskills "wcsraces" server_var(wcs_race) "numberofskills"
+		wcs_getlanguage "wcs_lng" "wcs_lng_level"
+		wcs_getlanguage "wcs_lng2" "wcs_lng_total"
+		es_format wcs_text "\n->1. %1\n -----------------------\n o %2 %3 %4 \n -----------------------\n o %5 : %6 %7" server_var(wcs_name) server_var(wcs_lng2) server_var(wcs_lng) server_var(wcs_total_level) server_var(wcs_racename) server_var(wcs_lng) server_var(wcs_level)
+		// get skills
+		es_keygetvalue wcs_skillname "wcsraces" server_var(wcs_race) "skillnames"
+		es_xsetinfo wcs_counter 1
+		es_xsetinfo wcs_tmp "%1\n  %2 [%3/%4]"
+		es_keygetvalue wcs_mskilllevel "wcsraces" server_var(wcs_race) "numberoflevels"
+		if (server_var(wcs_numberofskills) > 0) then while "server_var(wcs_counter) <= server_var(wcs_numberofskills)" "es_format wcs_skill skill_%1 server_var(wcs_counter);es_keygetvalue wcs_skilllevel wcsuserdata server_var(wcs_key) server_var(wcs_skill);es_token wcs_name server_var(wcs_skillname) server_var(wcs_counter) |;es_format wcs_text server_var(wcs_tmp) server_var(wcs_text) server_var(wcs_name) server_var(wcs_skilllevel) server_var(wcs_mskilllevel);es_xmath wcs_counter + 1"
+		es_format wcs_text "%1\n -----------------------\n" server_var(wcs_text)
+		// get credits
+		es_keygetvalue wcs_tmp1 wcsuserdata server_var(wcs_key) "credits"
+		wcs_getlanguage "wcs_lng" "wcs_lng_credits"
+		if (server_var(wcs_tmp1) != "0") then es_xformat wcs_text "%1 o %2 : $ %3\n" server_var(wcs_text) server_var(wcs_lng) server_var(wcs_tmp1)
+		// get skulls
+		es_keygetvalue wcs_tmp1 wcsuserdata server_var(wcs_key) "skulls"
+		wcs_getlanguage "wcs_lng" "wcs_lng_skulls"
+		if (server_var(wcs_tmp1) != "0") then es_xformat wcs_text "%1 o %2 : %3\n" server_var(wcs_text) server_var(wcs_lng) server_var(wcs_tmp1)
+		es playerget speed wcs_tmp1 server_var(wcs_key)
+		wcs_getlanguage "wcs_lng" "wcs_lng_speed"
+		if (server_var(wcs_tmp1) != "0") then if (server_var(wcs_tmp1) != 1) then es_xmath wcs_tmp1 * 100
+		if (server_var(wcs_tmp1) != "0") then wcs_decimal wcs_tmp1 server_var(wcs_tmp1) 
+		if (server_var(wcs_tmp1) != "0") then if (server_var(wcs_tmp1) != 1) then es_xformat wcs_text "%1 o %2 : %3 %\n" server_var(wcs_text) server_var(wcs_lng) server_var(wcs_tmp1)
+		es wcs_getgravity wcs_tmp1 server_var(wcs_key)
+		wcs_getlanguage "wcs_lng" "wcs_lng_gravity"
+		if (server_var(wcs_tmp1) != "0") then es_xmath wcs_tmp1 * 100
+		if (server_var(wcs_tmp1) != "0") then wcs_decimal wcs_tmp1 server_var(wcs_tmp1) 
+		if (server_var(wcs_tmp1) != "0") then es_xformat wcs_text "%1 o %2 : %3 %\n" server_var(wcs_text) server_var(wcs_lng) server_var(wcs_tmp1)
+		es wcs_getcolor server_var(wcs_key) wcs_x1 wcs_y1 wcs_z1 wcs_tmp1
+		es_math wcs_tmp1 float
+		es_xmath wcs_tmp1 / -2.55
+		es_xmath wcs_tmp1 + 100
+		wcs_getlanguage "wcs_lng" "wcs_lng_invisibility"
+		if (server_var(wcs_tmp1) != "0") then wcs_decimal wcs_tmp1 server_var(wcs_tmp1)
+		if (server_var(wcs_tmp1) != "0") then es_xformat wcs_text "%1 o %2 : %3 %\n" server_var(wcs_text) server_var(wcs_lng) server_var(wcs_tmp1)
+		es_getplayerprop wcs_dead server_var(wcs_key) "CCSPlayer.baseclass.pl.deadflag"
+		if (server_var(wcs_dead) = "0") do
+		{
+			es playerget health wcs_tmp1 server_var(wcs_key)
+			wcs_getlanguage "wcs_lng" "wcs_lng_health"
+			if (server_var(wcs_tmp1) != "100") then es_xformat wcs_text "%1 o %2 : %3 %\n" server_var(wcs_text) server_var(wcs_lng) server_var(wcs_tmp1)
+		}
+		es_format wcs_text "%1\n \n->8. %2" server_var(wcs_text) server_var(wcs_lng_back)
+		es_menu 0 event_var(userid) server_var(wcs_text)
+		es_xmath wcs_page + 1
+		es_keysetvalue "wcsuserdata" event_var(userid) "page" server_var(wcs_page)
+	}
+	if (server_var(wcs_debug) = "1") then echo wcs_playerinfo_details end
+}
+// <<<<<<<<<<<<<<<<< END PLAYERINFO <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+
+// >>>>>>>>>>>>>>>>> SHOW/SPEND/RESET SKILLS BLOCKS >>>>>>>>>>>>>>>>>>>>>>>>>>>>
+block wcs_showskills
+{
+	if (server_var(wcs_debug) = "1") then echo wcs_showskills start
+	es_xsetinfo wcs_userid 0
+	es_xgetargv wcs_userid 1
+	es_exists wcs_exists userid server_var(wcs_userid)
+	if (server_var(wcs_exists) = 0) do
+	{
+		es_xgetcmduserid wcs_userid
+		es_exists wcs_exists userid server_var(wcs_userid)
+	}
+	es wcs_menuzero server_var(wcs_userid)
+	if (server_var(wcs_exists) = 1) do
+	{
+		es_exists wcs_exists key "wcsuserdata" server_var(wcs_userid)
+		if (server_var(wcs_exists) = 1) do
+		{
+			es_keygetvalue wcs_race "wcsuserdata" server_var(wcs_userid) "race"
+			es_keygetvalue wcs_racename "wcsraces" server_var(wcs_race) "name"
+			es_keygetvalue wcs_numberofskills "wcsraces" server_var(wcs_race) "numberofskills"
+			es_keygetvalue wcs_unused "wcsuserdata" server_var(wcs_userid) "unused"
+			wcs_getlanguage "wcs_lng" "wcs_lng_your"
+			wcs_getlanguage "wcs_lng2" "wcs_lng_skills"
+			es_format wcs_text "%1 %2 %3:" server_var(wcs_lng) server_var(wcs_racename) server_var(wcs_lng2)
+			es_xsetinfo wcs_counter 1
+			if (server_var(wcs_numberofskills) > 0) then while "server_var(wcs_counter) <= server_var(wcs_numberofskills)" "es_format wcs_val skill_%1 server_var(wcs_counter);es_xdoblock wcs/wcsusers/wcs_showskills_init;es_xmath wcs_counter + 1"
+			wcs_getlanguage "wcs_lng" "wcs_lng_unusedpoints"
+			es_format wcs_text "%1\n \n %2 : %3\n" server_var(wcs_text) server_var(wcs_lng) server_var(wcs_unused)
+			es_strlen wcs_strlen server_var(wcs_text)
+			if (server_var(wcs_strlen) > 1) then es_xmenu 0 server_var(wcs_userid) server_var(wcs_text)
+		}
+	}
+	if (server_var(wcs_debug) = "1") then echo wcs_showskills end
+}
+
+block wcs_showskills_init
+{
+	es_keygetvalue wcs_skillname "wcsraces" server_var(wcs_race) "skillnames"
+	es_token wcs_skillname server_var(wcs_skillname) server_var(wcs_counter) "|"
+	es_keygetvalue wcs_skilllevel "wcsuserdata" server_var(wcs_userid) server_var(wcs_val)
+	if (server_var(wcs_showskills_details) = "1") do
+	{
+		es_keygetvalue wcs_skilldescr "wcsraces" server_var(wcs_race) "skilldescr"
+		es_token wcs_skilldescr server_var(wcs_skilldescr) server_var(wcsc_counter) "|"
+		es_format wcs_text "%1\n->%2. %3 : %4 (%5)" server_var(wcs_text) server_var(wcs_counter) server_var(wcs_skillname) server_var(wcs_skilllevel) server_var(wcs_skilldescr)
+	}
+	else do
+	{
+		es_format wcs_text "%1\n->%2. %3 : %4" server_var(wcs_text) server_var(wcs_counter) server_var(wcs_skillname) server_var(wcs_skilllevel)
+	}
+}
+
+block wcs_spendskills
+{
+	if (server_var(wcs_debug) = "1") then echo wcs_spendskills start
+	es_xgetargv wcs_userid 1
+	es wcs_menuzero server_var(wcs_userid)
+	es_exists wcs_exists userid server_var(wcs_userid)
+	if (server_var(wcs_exists) = 0) do
+	{
+		es_xgetcmduserid wcs_userid
+		es_exists wcs_exists userid server_var(wcs_userid)
+	}
+	if (server_var(wcs_exists) = 1) do
+	{
+		es_keygetvalue wcs_id "wcsuserdata" server_var(wcs_userid) "id"
+		es_keygetvalue wcs_race "wcsuserdata" server_var(wcs_userid) "race"
+		es_keygetvalue wcs_racename "wcsraces" server_var(wcs_race) "name"
+		es_keygetvalue wcs_unused "wcsuserdata" server_var(wcs_userid) "unused"
+		es_keygetvalue wcs_level "wcsuserdata" server_var(wcs_userid) "level"
+		es_keygetvalue wcs_numberoflevels "wcsraces" server_var(wcs_race) "numberoflevels"
+		es_keygetvalue wcs_numberofskills "wcsraces" server_var(wcs_race) "numberofskills"
+		es_setinfo wcs_maxlevel server_var(wcs_numberoflevels)
+		es_math wcs_maxlevel * server_var(wcs_numberofskills)
+		es_setinfo wcs_leveldiff server_var(wcs_level)
+		es_math wcs_leveldiff - server_var(wcs_unused)
+		if ("BOT" in server_var(wcs_id)) do
+		{
+			if (server_var(wcs_maxlevel) > server_var(wcs_leveldiff)) do
+			{
+				es_xsetinfo wcs_counter 1
+				if (server_var(wcs_numberofskills) > 0) then while "server_var(wcs_counter) < server_var(wcs_maxlevel)" "es_xdoblock wcs/wcsusers/wcs_spendskills_bot;es_xmath wcs_counter + 1"
+				es_keysetvalue wcsuserdata server_var(wcs_userid) unused server_var(wcs_unused)
+			}
+			es_xsetinfo wcs_exists 0
+		}
+		if (server_var(wcs_exists) = 1) do
+		{
+			if (server_var(wcs_maxlevel) > server_var(wcs_leveldiff)) do
+			{
+				es wcs_spendskillsmenu server_var(wcs_userid)
+				//wcs_getlanguage "wcs_lng" "wcs_lng_spendskills_1"
+				//wcs_getlanguage "wcs_lng2" "wcs_lng_skills"
+				//es_format wcs_text "%1 %2 %3:" server_var(wcs_lng) server_var(wcs_racename) server_var(wcs_lng2)
+				//es_xsetinfo wcs_counter 1
+				//if (server_var(wcs_numberofskills) > 0) then while "server_var(wcs_counter) <= server_var(wcs_numberofskills)" "es_format wcs_val skill_%1 server_var(wcs_counter);es_xdoblock wcs/wcsusers/wcs_spendskills_init;es_xmath wcs_counter + 1"
+				//wcs_getlanguage "wcs_lng" "wcs_lng_unusedpoints"
+				//es_format wcs_text "%1\n \n %2 : %3\n \n 0. %4" server_var(wcs_text) server_var(wcs_lng) server_var(wcs_unused) server_var(wcs_lng_exit)
+				//es_strlen wcs_strlen server_var(wcs_text)
+				//if (server_var(wcs_strlen) > 1) then es_xmenu 0 server_var(wcs_userid) server_var(wcs_text)
+				//es_keysetvalue "wcsuserdata" server_var(wcs_userid) "menu" "level"
+			}
+			else do
+			{
+				wcs_getlanguage "wcs_lng" "wcs_lng_maxlvlreached"
+				es_tell server_var(wcs_userid) #multi server_var(wcs_lng)
+			}
+		}
+	}
+	if (server_var(wcs_debug) = "1") then echo wcs_spendskills end
+}
+
+block wcs_spendskills_bot
+{
+	es_rand wcs_skill 1 server_var(wcs_numberofskills)
+	if (server_var(wcs_level) < server_var(wcs_ultimatelevel)) then if (server_var(wcs_skill) = server_var(wcs_numberofskills)) then es_xsetinfo wcs_skill "1"
+	es_format wcs_val "skill_%1" server_var(wcs_skill)
+	es_keygetvalue wcs_tmp wcsuserdata server_var(wcs_userid) server_var(wcs_val)
+	es_xcopy wcs_tmp1 wcs_tmp
+	if (server_var(wcs_tmp1) < server_var(wcs_numberoflevels)) then if (server_var(wcs_unused) >= 1) then es_xmath wcs_tmp + 1
+	if (server_var(wcs_tmp1) < server_var(wcs_numberoflevels)) then if (server_var(wcs_unused) >= 1) then es_xmath wcs_unused - 1
+	es_keysetvalue wcsuserdata server_var(wcs_userid) server_var(wcs_val) server_var(wcs_tmp)
+	if (server_var(wcs_unused) <= 0) then es_xsetinfo wcs_counter server_var(wcs_maxlevel)
+}
+
+block wcs_spendskills_init
+{
+	if (server_var(wcs_debug) = "1") then echo wcs_spendskills_init start
+	if (server_var(wcs_val) != "0") do
+	{
+		es_keygetvalue wcs_skillname "wcsraces" server_var(wcs_race) "skillnames"
+		es_token wcs_skillname server_var(wcs_skillname) server_var(wcs_counter) "|"
+		es_keygetvalue wcs_skilllevel "wcsuserdata" server_var(wcs_userid) server_var(wcs_val)
+		if (server_var(wcs_skilllevel) < server_var(wcs_numberoflevels)) do
+		{
+			if (server_var(wcs_counter) != server_var(wcs_numberofskills)) do
+			{
+				es_setinfo wcs_skilllevel2 server_var(wcs_skilllevel)
+				es_xmath wcs_skilllevel2 + 1
+				es_format wcs_text "%1\n->%2. %3 : %4 > %5" server_var(wcs_text) server_var(wcs_counter) server_var(wcs_skillname) server_var(wcs_skilllevel) server_var(wcs_skilllevel2)
+			}
+			else do
+			{
+				if (server_var(wcs_level) >= server_var(wcs_ultimatelevel)) do
+				{
+					es_setinfo wcs_skilllevel2 server_var(wcs_skilllevel)
+					es_xmath wcs_skilllevel2 + 1
+					es_format wcs_text "%1\n->%2. %3 (ultimate) : %4 > %5" server_var(wcs_text) server_var(wcs_counter) server_var(wcs_skillname) server_var(wcs_skilllevel) server_var(wcs_skilllevel2)
+				}
+				else do
+				{
+					es_format wcs_text "%1\n%2. %3 (ultimate) : %4" server_var(wcs_text) server_var(wcs_counter) server_var(wcs_skillname) server_var(wcs_skilllevel)
+				}
+			}
+		}
+	}
+	if (server_var(wcs_debug) = "1") then echo wcs_spendskills_init end
+}
+
+block wcs_spendskills_handle
+{
+	if (server_var(wcs_debug) = "1") then echo wcs_spendskills_handle begin
+	es_exists wcs_exists key "wcsuserdata" event_var(userid)
+	if (server_var(wcs_exists) = 1) do
+	{
+		es_keygetvalue wcs_race "wcsuserdata" event_var(userid) "race"
+		es_keygetvalue wcs_unused "wcsuserdata" event_var(userid) "unused"
+		es_keygetvalue wcs_level "wcsuserdata" event_var(userid) "level"
+		es_keygetvalue wcs_numberoflevels "wcsraces" server_var(wcs_race) "numberoflevels"
+		es_keygetvalue wcs_numberofskills "wcsraces" server_var(wcs_race) "numberofskills"
+		if (event_var(commandstring) != "10") do
+		{
+			if (server_var(wcs_unused) > 0) do
+			{
+				if (event_var(commandstring) <= server_var(wcs_numberofskills)) do
+				{
+					es_format wcs_skill "skill_%1" event_var(commandstring)
+					es_keygetvalue wcs_skilllevel "wcsuserdata" event_var(userid) server_var(wcs_skill)
+					if (server_var(wcs_skilllevel) < server_var(wcs_numberoflevels)) do
+					{
+						es_xsetinfo wcs_tmp2 0
+						if (event_var(commandstring) != server_var(wcs_numberofskills)) do
+						{
+							es_xsetinfo wcs_tmp2 1
+						}
+						else do
+						{
+							// ultimate - check level
+							if (server_var(wcs_level) >= server_var(wcs_ultimatelevel)) do
+							{
+								es_xsetinfo wcs_tmp2 1
+							}
+							else do
+							{
+								wcs_getlanguage "wcs_lng" "wcs_lng_lowlevel"
+								es_format wcs_text server_var(wcs_lng) server_var(wcs_ultimatelevel)
+								es_tell event_var(userid) #multi server_var(wcs_text)
+								es_keysetvalue "wcsuserdata" event_var(userid) "menu" "0"
+							}
+						}
+						if (server_var(wcs_tmp2) = 1) do
+						{
+							es_xmath wcs_skilllevel + 1
+							es_xmath wcs_unused - 1
+							es_keysetvalue wcsuserdata event_var(userid) server_var(wcs_skill) server_var(wcs_skilllevel)
+							es_keysetvalue wcsuserdata event_var(userid) "unused" server_var(wcs_unused)
+							es_keygetvalue wcs_skillname "wcsraces" server_var(wcs_race) "skillnames"
+							es_token wcs_skillname server_var(wcs_skillname) event_var(commandstring) "|"
+							wcs_getlanguage "wcs_lng" "wcs_lng_yourskill"
+							wcs_getlanguage "wcs_lng2" "wcs_lng_nowonlevel"
+							es_format wcs_text "#lightgreen%1 #green'%2' #lightgreen%3 #green%4." server_var(wcs_lng) server_var(wcs_skillname) server_var(wcs_lng2) server_var(wcs_skilllevel)
+							wcs_getlanguage "wcs_lng" "wcs_lng_yournewskill"
+							wcs_getlanguage "wcs_lng3" "wcs_lng_spendskillshint"
+							if (server_var(wcs_skilllevel) = 1) then es_xformat wcs_text "#lightgreen%1 #green'%2' #lightgreen%3 #green%4#lightgreen, %5." server_var(wcs_lng) server_var(wcs_skillname) server_var(wcs_lng2) server_var(wcs_skilllevel) server_var(wcs_lng3)
+							es_tell event_var(userid) #multi server_var(wcs_text)
+						}
+						// refresh the skills
+						es_keysetvalue "wcsuserdata" event_var(userid) "skillcheck" "1"
+					}
+				}
+			}
+			else do
+			{
+				wcs_getlanguage "wcs_lng" "wcs_lng_nofreepoints"
+				es_tell event_var(userid) #multi server_var(wcs_lng)
+				es_keysetvalue "wcsuserdata" event_var(userid) menu "0"
+			}
+			if (server_var(wcs_unused) >= 1) then wcs_spendskills event_var(userid)
+		}
+	}
+	if (server_var(wcs_debug) = "1") then echo wcs_spendskills_handle end
+}
+
+block wcs_resetskills
+{
+	if (server_var(wcs_debug) = "1") then echo wcs_resetskills start
+	// first, is it a custom command ?
+	es_xsetinfo wcs_userid 0
+	es_xgetargv wcs_userid 1
+	es_exists wcs_exists userid server_var(wcs_userid)
+	if (server_var(wcs_exists) = 0) do
+	{
+		// or a say command
+		es_xgetcmduserid wcs_userid
+		es_exists wcs_exists userid server_var(wcs_userid)
+	}
+	// check if its valid
+	if (server_var(wcs_exists) = 1) do
+	{
+		es_xsetinfo wcs_dead "1"
+		es_getplayerprop wcs_dead server_var(wcs_userid) "CCSPlayer.baseclass.pl.deadflag"
+		if (server_var(wcs_dead) = "0") do
+		{
+			es_keygetvalue wcs_tmp "wcsuserdata" server_var(wcs_userid) "resetskills"
+			if (server_var(wcs_tmp) = "1") do
+			{
+				es wcs damage server_var(wcs_userid) server_var(wcs_userid) 999
+				es_xsetinfo wcs_dead "1"
+				es_keysetvalue wcsuserdata server_var(wcs_userid) "resetskills" "0"
+			}
+		}
+		if (server_var(wcs_dead) = "1") do
+		{
+			es_keygetvalue wcs_race "wcsuserdata" server_var(wcs_userid) "race"
+			es_foreachval wcs_val in "wcsuserdata" server_var(wcs_userid) "if (skill_ in server_var(wcs_val)) then es_xkeysetvalue wcsuserdata server_var(wcs_userid) server_var(wcs_val) 0"
+			es_keygetvalue wcs_level "wcsuserdata" server_var(wcs_userid) "level"
+			es_keysetvalue wcsuserdata server_var(wcs_userid) "unused" server_var(wcs_level)
+			wcs_getlanguage "wcs_lng" "wcs_lng_skillsreseted"
+			es_format wcs_text server_var(wcs_lng) server_var(wcs_level)
+			es_tell server_var(wcs_userid) #multi server_var(wcs_text)
+			es wcs_saveplayer server_var(wcs_userid)
+			es_keysetvalue wcsuserdata server_var(wcs_userid) "skillcheck" "1"
+			if(server_var(wcs_cfg_resetskillspenalty) > 0) do
+			{
+				es_xcopy wcs_tmp wcs_level
+				es_math wcs_tmp * server_var(wcs_levelxp)
+				es_math wcs_tmp * server_var(wcs_cfg_resetskillspenalty)
+				es_xmath wcs_tmp / 100
+				es wcs_decimal wcs_tmp server_var(wcs_tmp)
+				if (server_var(wcs_tmp) > 0) do
+				{
+					wcs_getlanguage "wcs_lng" "wcs_lng_resetskillspenalty"
+					es_format wcs_lng server_var(wcs_lng) server_var(wcs_cfg_resetskillspenalty)
+					es_xmath wcs_tmp * -1
+					es wcs_givexp server_var(wcs_userid) server_var(wcs_tmp) server_var(wcs_lng)
+				}
+			}
+		}
+		else do
+		{
+			wcs_getlanguage "wcs_lng" "wcs_lng_cannotreset"
+			es_tell server_var(wcs_userid) #multi server_var(wcs_lng)
+			es_keysetvalue wcsuserdata server_var(wcs_userid) resetskills "1"
+		}
+	}
+	if (server_var(wcs_debug) = "1") then echo wcs_resetskills end
+}
+// <<<<<<<<<<<<<<<<< END SHOW/SPEND/RESET SKILLS >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+block wcs_showcredits
+{
+	if (server_var(wcs_game) != server_var(wcs_game_css)) do
+	{
+		es_xgetargv wcs_userid 1
+		es_exists wcs_exists userid server_var(wcs_userid)
+		if (server_var(wcs_exists) = 0) do
+		{
+			es_xgetcmduserid wcs_userid
+			es_exists wcs_exists userid server_var(wcs_userid)
+		}
+		if (server_var(wcs_exists) = 1) do
+		{
+			es_exists wcs_exists key "wcsuserdata" server_var(wcs_userid)
+			if (server_var(wcs_exists) = 1) do
+			{
+				es_xsetinfo wcs_credits 0
+				es_keygetvalue wcs_credits "wcsuserdata" server_var(wcs_userid) "credits"
+				wcs_getlanguage "wcs_lng" "wcs_lng_youhave"
+				wcs_getlanguage "wcs_lng2" "wcs_lng_credits"
+				es_format wcs_text "#lightgreen%1 #green%2 %3." server_var(wcs_lng) server_var(wcs_credits) server_var(wcs_lng2)
+				es_tell server_var(wcs_userid) #multi server_var(wcs_text)
+			}
+		}
+	}
+}
+

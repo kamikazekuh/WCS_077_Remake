@@ -1,0 +1,1149 @@
+////////////////////////////////////////
+// wcs - Warcraft:Source              //
+// ---------------------------------- //
+//  by kRypT0n!Te                     //
+//      http://wcs.despo-clan.de      //
+// ---------------------------------- //
+////////////////////////////////////////
+// wcs - Warcraft:Source : Orangebox  //
+// ---------------------------------- //
+//  by [Oddity]TeacherCreature        //
+//     http://wcs.warcraft-source.net //
+// ---------------------------------- //
+// Content of this subscript          //
+// - many functions...                //
+////////////////////////////////////////
+// say commands:
+// - wcshelp (or warcraft)
+// - savexp
+// - feedback text...
+// - bindmouse3
+// - wcsmenu (or wcs)
+// - levi (DOD:S only)
+//
+// admin/internal commands:
+// - wcs_say <user|team|world> <text> <userid> (obsolete)
+// - wcs_givecredits <userid> <amount> <reason> <forced>
+// - wcs_menuzero <userid>
+// - wcs_flash <userid> <targetid>
+// - wcs_showcredits <userid>
+// - wcs_removefx <userid> <effectype>
+// - wcs_giveitem <userid> <item>
+// - wcs_explode <userid> <targetid> <magnitude> <radius>
+// - wcs_dealdamage <userid> <targetid> <magnitude> <radius>
+// - wcs_saveplayer <userid>
+// - wcs_getplayer <userid>
+// - wcs_checkevents <userid> <type>
+// - wcs_showinfohandle <type>
+//
+////////////////////////////////////////
+
+block load
+{
+	es_xload wcs/wcsfunctions/wcsxp
+	es_xload wcs/wcsfunctions/wcsskills
+
+	es_xkeygroupcreate "wcsfeedback"
+	es_xkeygroupload "wcsfeedback" "|wcs"
+
+	es_xexists wcs_exists command wcs_allowsome_weapons
+	if (server_var(wcs_exists) = 0) then es_xregcmd wcs_allowsome_weapons wcs/wcsfunctions/wcs_allowsome_weapons "wcs_allowsome_weapons <userid> <weapon1> <weapon2> <weapon3> <bonus ammo primary> <bonus ammo secondary> <bonus ammo other> <knifish?> - Restricts and unrestricts stuff as well as setting ammo amounts and stuff for guns"
+
+	es_xexists wcs_exists command wcs_checkevents
+	if (server_var(wcs_exists) = 0) then es_xregcmd wcs_checkevents wcs/wcsfunctions/wcs_checkevents "wcs_checkevents - usage: wcs_checkevents <userid> <type>"
+	es_xexists wcs_exists command wcs_say
+	if (server_var(wcs_exists) = 0) then es_xregcmd wcs_say wcs/wcsfunctions/wcs_say "wcs_say - usage: wcs_say <user|team|world> <text> <userid>"
+	es_xexists wcs_exists command wcs_givecredits
+	if (server_var(wcs_exists) = 0) then es_xregcmd wcs_givecredits wcs/wcsfunctions/wcs_givecredits "wcs_givecredits - usage: wcs_givecredits <userid> <amount> <reason> <forced>"
+	es_xexists wcs_exists command wcshelp
+	if (server_var(wcs_exists) = 0) then es_xregsaycmd wcshelp wcs/wcsfunctions/wcs_help "Shows help message"
+	es_xexists wcs_exists command warcrafthelp
+	if (server_var(wcs_exists) = 0) then es_xregsaycmd warcraft wcs/wcsfunctions/wcs_help "Shows help message"
+	es_xexists wcs_exists command wcs_menuzero
+	if (server_var(wcs_exists) = 0) then es_xregcmd wcs_menuzero wcs/wcsfunctions/wcs_menuzero "Resets the menu"
+	es_xexists wcs_exists command savexp
+	if (server_var(wcs_exists) = 0) then es_xregsaycmd savexp wcs/wcsfunctions/wcs_savexp "savexp"
+	es_xexists wcs_exists command feedback
+	if (server_var(wcs_exists) = 0) then es_xregsaycmd feedback wcs/wcsfunctions/wcs_feedback "Enables users to send feedback"
+	es_xexists wcs_exists command wcs_flash
+	if (server_var(wcs_exists) = 0) then es_xregcmd wcs_flash wcs/wcsfunctions/wcs_flash "wcs_flash <userid> <targetid>"
+	es_xexists wcs_exists command wcs_showcredits
+	if (server_var(wcs_exists) = 0) then es_xregcmd wcs_showcredits wcs/wcsfunctions/wcs_showcredits "wcs_showcredits - usage: wcs_showcredits <userid> (DOD:S only)"
+	es_xexists wcs_exists command wcs_showinfohandle
+	if (server_var(wcs_exists) = 0) then es_xregcmd wcs_showinfohandle wcs/wcsfunctions/wcs_showinfohandle "a handler..."
+	es_xexists wcs_exists command bindmouse3
+	if (server_var(wcs_exists) = 0) then es_xregsaycmd bindmouse3 wcs/wcsfunctions/wcs_bindmouse3 "Binds the ultimate on the mouse3 button"
+	es_xexists wcs_exists command wcsmenu
+	if (server_var(wcs_exists) = 0) then es_xregsaycmd wcsmenu wcs/wcsfunctions/wcs_wcsmenu "Shows a menu where you can reach all other menus"
+	es_xexists wcs_exists command wcs
+	if (server_var(wcs_exists) = 0) then es_xregsaycmd wcs wcs/wcsfunctions/wcs_wcsmenu "Shows a menu where you can reach all other menus"
+	es_xexists wcs_exists command wcs_removefx
+	if (server_var(wcs_exists) = 0) then es_xregcmd wcs_removefx wcs/wcsfunctions/wcs_removefx "wcs_removefx <userid> <type> - Takes an effect from a player (type: freeze, speed, god)"
+	es_xexists wcs_exists command wcs_giveitem
+	if (server_var(wcs_exists) = 0) then es_xregcmd wcs_giveitem wcs/wcsfunctions/wcs_giveitem "wcs_giveitem <id> <item name> - Gives a custom item, checks for death and stacks grenades"
+	es_xexists wcs_exists command wcs_explode
+	if (server_var(wcs_exists) = 0) then es_xregcmd wcs_explode wcs/wcsfunctions/wcs_explode "wcs_explode - usage: wcs_explode <userid> <targetid> <magnitude> <radius>"
+	es_xexists wcs_exists command wcs_dealdamage
+	if (server_var(wcs_exists) = 0) then es_xregcmd wcs_dealdamage wcs/wcsfunctions/wcs_dealdamage "wcs_dealdamage - usage: wcs_dealdamage <userid> <targetid> <damage>"
+	es_xexists wcs_exists command wcs_saveplayer
+	if (server_var(wcs_exists) = 0) then es_xregcmd wcs_saveplayer wcs/wcsfunctions/wcs_saveplayer "save a single player to the DB"
+	es_xexists wcs_exists command wcs_getplayer
+	if (server_var(wcs_exists) = 0) then es_xregcmd wcs_getplayer wcs/wcsfunctions/wcs_getplayer "get the player record from the DB"
+	// one special command for DOD:S bugfix (theres no player_jump event)
+	if (server_var(wcs_game) != server_var(wcs_game_css)) do
+	{
+		es_xexists wcs_exists command levi
+		if (server_var(wcs_exists) = 0) then es_xregsaycmd levi wcs/wcsfunctions/wcs_levi_reactivate "Re-activate your levitation (used after climbing ladders)"
+	}
+}
+
+block unload
+{
+	es_xunload wcs/wcsfunctions/wcsxp
+	es_xunload wcs/wcsfunctions/wcsskills
+	es_xkeygroupsave "wcsfeedback" "|wcs"
+	es_xkeygroupdelete "wcsfeedback"
+}
+
+block wcs_allowsome_weapons
+{
+	es_xset wcs_uid 0
+	es_xset wcs_weapon1 0
+	es_xset wcs_weapon2 0
+	es_xset wcs_weapon3 0
+	es_xset wcs_bonusammo_primary 0
+	es_xset wcs_bonusammo_secondary 0
+	es_xset wcs_bonusammo_other 0
+	es_xset wcs_knifish 0
+	es_xset wcs_invisbomb 0
+	es_xset wcs_changed_weaponname1 0
+	es_xset wcs_changed_weaponname2 0
+	es_xset wcs_changed_weaponname3 0
+
+	es_xgetargv wcs_uid 1
+	es_xgetargv wcs_weapon1 2
+	es_xgetargv wcs_weapon2 3
+	es_xgetargv wcs_weapon3 4
+	es_xgetargv wcs_bonusammo_primary 5
+	es_xgetargv wcs_bonusammo_secondary 6
+	es_xgetargv wcs_bonusammo_other 7
+	es_xgetargv wcs_knifish 8
+	es_xgetargv wcs_invisbomb 9
+
+	es wcs removeweapon server_var(wcs_uid) 1
+	es wcs removeweapon server_var(wcs_uid) 2
+	es wcs removeweapon server_var(wcs_uid) 3
+	es wcs removeweapon server_var(wcs_uid) 4
+	es wcs_xrestrict restrict server_var(wcs_uid) #all
+
+	if (server_var(wcs_weapon1) != 0) do
+	{
+		es_format wcs_changed_weaponname1 weapon_%1 server_var(wcs_weapon1)
+		es_delayed 0.1 wcs_xrestrict allow server_var(wcs_uid) server_var(wcs_weapon1)
+		es_delayed 0.5 wcs give server_var(wcs_uid) server_var(wcs_changed_weaponname1)
+		if (server_var(wcs_bonusammo_other) != 0) do
+		{
+			es_delayed 0.7 playerset ammo server_var(wcs_uid) server_var(wcs_changed_weaponname1) server_var(wcs_bonusammo_other)
+		}
+	}
+	if (server_var(wcs_weapon2) != 0) do
+	{
+		es_format wcs_changed_weaponname2 weapon_%1 server_var(wcs_weapon2)
+		es_delayed 0.1 wcs_xrestrict allow server_var(wcs_uid) server_var(wcs_weapon2)
+		es_delayed 0.5 wcs give server_var(wcs_uid) server_var(wcs_changed_weaponname2)
+		if (server_var(wcs_bonusammo_other) != 0) do
+		{
+			es_delayed 0.7 playerset ammo server_var(wcs_uid) server_var(wcs_changed_weaponname2) server_var(wcs_bonusammo_other)
+		}
+	}
+	if (server_var(wcs_weapon3) != 0) do
+	{
+		es_format wcs_changed_weaponname3 weapon_%1 server_var(wcs_weapon3)
+		es_delayed 0.1 wcs_xrestrict allow server_var(wcs_uid) server_var(wcs_weapon3)
+		es_delayed 0.5 wcs give server_var(wcs_uid) server_var(wcs_changed_weaponname3)
+		if (server_var(wcs_bonusammo_other) != 0) do
+		{
+			es_delayed 0.7 playerset ammo server_var(wcs_uid) server_var(wcs_changed_weaponname3) server_var(wcs_bonusammo_other)
+		}
+	}
+	es_delayed 0.3 wcs_xrestrict allow server_var(wcs_uid) c4
+	es wcs give 0.4 server_var(wcs_uid) weapon_c4
+	if (server_var(wcs_bonusammo_primary) != 0) do
+	{
+		es_delayed 0.7 playerset ammo server_var(wcs_uid) 1 server_var(wcs_bonusammo_primary)
+	}
+	if (server_var(wcs_bonusammo_secondary) != 0) do
+	{
+		es_delayed 0.7 playerset ammo server_var(wcs_uid) 2 server_var(wcs_bonusammo_secondary)
+	}
+	if (server_var(wcs_knifish) = 1) do
+	{
+		es wcs_givexp server_var(wcs_uid) 60 0 1
+		es_tell server_var(wcs_uid) #multi #lightgreenKnifish Race #default: #greenYou are close enough to a knife race at first so you gain#lightgreen 60 #greenEXP.
+	}
+	if (server_var(wcs_invisbomb) = 1) do
+	{
+		es_delayed 1 playerset color server_var(wcs_uid) 255 255 255 0 1
+		es_delayed 1.1 playerset color server_var(wcs_uid) 255 255 255 255 0
+	}
+}
+
+block wcs_playercheck
+{
+	if (server_var(wcs_debug) = 1) then profile begin playercheck
+	// checks the record in wcsusers, if new player create them
+	if (server_var(wcs_id) != 0) do
+	{
+		es wcs_keygetvalue wcs_race server_var(wcs_id) "race"
+		if (server_var(wcs_race) = "0") do
+		{
+			// random start race, but not a restricted one (NEW PLAYER !)
+			es_rand wcs_race 1 server_var(wcs_numberofraces)
+			es_keygetvalue wcs_tmp "wcsraces" server_var(wcs_race) "required_level"
+			if (server_var(wcs_tmp) != "0") then es_xset wcs_race "1"
+			es_keygetvalue wcs_tmp "wcsraces" server_var(wcs_race) "allow_only"
+			if (server_var(wcs_tmp) != "0") then es_xset wcs_race "1"
+			if ("BOT" in server_var(wcs_id)) do
+			{
+				es_getplayername wcs_name event_var(userid)
+				es wcs_capitalize wcs_name server_var(wcs_name)
+				es_format wcs_id "BOT_%1" server_var(wcs_name)
+			}
+			es wcs_keysetvalue server_var(wcs_id) "race" server_var(wcs_race)
+			es wcs_menuzero event_var(userid)
+			if ("BOT" notin server_var(wcs_id)) then es_xdelayed 11 wcs_race_menu event_var(userid)
+			if (server_var(wcs_showtotalplayers) = "1") then es_xmath wcs_totalplayers + 1
+		}
+		es wcs_keygetvalue wcs_lastplayed server_var(wcs_id) "lastplayed"
+		if (server_var(wcs_lastplayed) = 0) then es wcs_keysetvalue server_var(wcs_id) "lastplayed" "0"
+		es_keygetvalue wcs_numberofskills "wcsraces" server_var(wcs_race) "numberofskills"
+		es_xset wcs_counter 1
+		while "server_var(wcs_counter) <= server_var(wcs_numberofskills)" "es_format wcs_skillnumber skill_%1 server_var(wcs_counter);es_keysetvalue wcsuserdata event_var(userid) server_var(wcs_skillnumber) 0;es_xmath wcs_counter + 1"
+	}
+	if (server_var(wcs_debug) = 1) then profile end playercheck
+}
+
+// >>>>>>>>>>>>>>>>> BEGIN CUSTOM COMMANDS >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+block wcs_say
+{
+	// usage:    wcs_say <location> <text> <userid>
+	// location: world, team, user
+	// text:     string for output, plain text in quotes
+	// userid:   give a VALID userid (not required with location: world)
+	es_xset wcs_location 0
+	es_xset wcs_text 0
+	es_xset wcs_sayuserid 0
+	es_xgetargv wcs_location 1
+	es_xgetargv wcs_text 2
+	es_xgetargv wcs_sayuserid 3
+	es_exists wcs_exists userid server_var(wcs_sayuserid)
+	if (server_var(wcs_exists) = 1) do
+	{
+		if (server_var(wcs_location) = "user") do
+		{
+			if (server_var(wcs_game) = server_var(wcs_game_css)) do
+			{
+				es_tell server_var(wcs_sayuserid) #green server_var(wcs_text)
+			}
+			es_xelse do
+			{
+				es_tell server_var(wcs_sayuserid) server_var(wcs_text)
+			}
+		}
+		if (server_var(wcs_location) = "world") do
+		{
+			if (server_var(wcs_game) = server_var(wcs_game_css)) do
+			{
+				es_msg #green server_var(wcs_sayuserid) server_var(wcs_text)
+			}
+			es_xelse do
+			{
+				es_msg server_var(wcs_text)
+			}
+		}
+		if (server_var(wcs_location) = "team") do
+		{
+			es_getplayerteam wcs_team server_var(wcs_sayuserid)
+			if (server_var(wcs_team) = 3) then es_msg server_var(wcs_text)
+			if (server_var(wcs_team) = 2) then es_msg server_var(wcs_text)
+		}
+	}
+	es_xelse do
+	{
+		if (server_var(wcs_location) = "world") do
+		{
+			if (server_var(wcs_game) = server_var(wcs_game_css)) do
+			{
+				es_msg #green server_var(wcs_text)
+			}
+			es_xelse do
+			{
+				es_msg server_var(wcs_text)
+			}
+		}
+	}
+}
+
+block wcs_givecredits
+{
+	if (server_var(wcs_debug) = 1) then profile begin givecredits
+	// usage:  wcs_givecredits <userid> <amount> <reason> <forced>
+	// userid: give a VALID userid
+	// amount: how many credits to add
+	// reason: text (optional)
+	// forced: 0/1 (optional)
+
+	es_xset wcs_giveuserid 0
+	es_xset wcs_amount 0
+	es_xset wcs_reason 0
+	es_xset wcs_forced 0
+
+	es_xgetargv wcs_giveuserid 1
+	es_xgetargv wcs_amount 2
+	es_xgetargv wcs_reason 3
+	es_xgetargv wcs_forced 4
+
+	es_exists wcs_exists userid server_var(wcs_giveuserid)
+	if (server_var(wcs_cfg_dods_noshopmenu) != 0) do
+	{
+		es_xmath wcs_amount / 10
+		es wcs_decimal wcs_amount server_var(wcs_amount) 0
+		es wcs_givexp server_var(wcs_giveuserid) server_var(wcs_amount) server_var(wcs_reason) server_var(wcs_forced)
+		es_xset wcs_exists 0
+	}
+	if (server_var(wcs_exists) = 1) do
+	{
+		es_xset wcs_credits 0
+		es_xset wcs_giveid 0
+		es_keygetvalue wcs_giveid "wcsuserdata" server_var(wcs_giveuserid) "id"
+		es_exists wcs_exists key wcsuserdata server_var(wcs_giveuserid)
+		if (server_var(wcs_exists) = 1) do
+		{
+			// check playercount if not forced
+			if (server_var(wcs_forced) = 0) do
+			{
+				es_xset wcs_playercount 0
+				es_getplayercount wcs_playercount
+			}
+			es_xelse do
+			{
+				es_set wcs_playercount server_var(wcs_minplayers)
+			}
+
+			if (server_var(wcs_playercount) >= server_var(wcs_minplayers)) do
+			{
+				es_keygetvalue wcs_credits wcsuserdata server_var(wcs_giveuserid) credits
+				// add the credits
+				es_math wcs_credits + server_var(wcs_amount)
+				// 16000 credits is the limit !
+				if (server_var(wcs_credits) > 16000) then es_xset wcs_credits 16000
+				es_keysetvalue wcsuserdata server_var(wcs_giveuserid) credits server_var(wcs_credits)
+				if (server_var(wcs_reason) != "0") do
+				{
+					wcs_getlanguage "wcs_lng" "wcs_lng_gained"
+					wcs_getlanguage "wcs_lng2" "wcs_lng_credits"
+					es_format wcs_text "#lightgreen%1 #green%2 #lightgreen%3 : %4" server_var(wcs_lng) server_var(wcs_amount) server_var(wcs_lng2) server_var(wcs_reason)
+					es_tell server_var(wcs_giveuserid) #multi server_var(wcs_text)
+				}
+			}
+			es_xelse do
+			{
+				wcs_getlanguage "wcs_lng" "wcs_lng_minplayers"
+				es_format wcs_text server_var(wcs_lng) server_var(wcs_minplayers)
+				es_tell server_var(wcs_giveuserid) #multi server_var(wcs_text)
+			}
+		}
+	}
+	if (server_var(wcs_debug) = 1) then profile end givecredits
+}
+
+
+
+block wcs_help
+{
+	if (server_var(wcs_debug) = "1") then echo wcs_help start
+	es_xgetcmduserid wcs_userid
+	es_exists wcs_exists userid server_var(wcs_userid)
+	if (server_var(wcs_exists) = 1) do
+	{
+		es wcs_menuzero server_var(wcs_userid)
+		// prints the wchelp menu out
+		if (server_var(wcs_game) != server_var(wcs_game_css)) then wcs_getlanguage "wcs_text" "wcs_lng_help_dods"
+		if (server_var(wcs_game) = server_var(wcs_game_css)) then wcs_getlanguage "wcs_text" "wcs_lng_help_css"
+		es_format wcs_text "%1 \n [ %2 by kRypT0n!Te - http://wcs.despo-clan.de ]" server_var(wcs_text) server_var(wcs_ver)
+		es_strlen wcs_strlen server_var(wcs_text)
+		if (server_var(wcs_strlen) > 1) then es_xif (server_var(wcs_strlen) < 900) then es_xmenu 30 server_var(wcs_userid) server_var(wcs_text)
+	}
+	if (server_var(wcs_debug) = "1") then echo wcs_help end
+}
+
+block wcs_checkevents
+{
+	if (server_var(wcs_debug) = 1) then profile begin checkevents
+	// custom command
+	es_xgetargv wcs_userid 1
+	es_xgetargv wcs_type 2
+	es_exists wcs_exists userid server_var(wcs_userid)
+	// check for item activation
+	es_keygetvalue wcs_itemactivate wcsuserdata server_var(wcs_userid) "itemactivate"
+	if (server_var(wcs_itemactivate) = "0") then es_xset wcs_exists 0
+	if (server_var(wcs_exists) = 1) do
+	{
+		es_exists wcs_exists keygroup server_var(wcs_type)
+		if (server_var(wcs_exists) = 1) do
+		{
+			es_exists wcs_exists key server_var(wcs_type) server_var(wcs_userid)
+			if (server_var(wcs_exists) = 1) do
+			{
+				es_keygetvalue wcs_sid server_var(wcs_type) server_var(wcs_userid) id
+				es_keygetvalue wcs_id "wcsuserdata" server_var(wcs_userid) "id"
+				// Check if user id belongs to the steamid/ip, if not remove
+				if (server_var(wcs_sid) = server_var(wcs_id)) do
+				{
+					es_xset wcs_cmd 0
+					es_xset wcs_descr 0
+					es_xset wcs_number 0
+					//es_foreachval wcs_val in server_var(wcs_type) event_var(userid) "if (icmd in server_var(wcs_val)) then es_xdoblock wcs/wcsfunctions/wcs_checkevents2"
+					// check only cmd1..3
+					es_xset wcs_val "icmd1"
+					es_xdoblock wcs/wcsfunctions/wcs_checkevents2
+					es_xset wcs_val "icmd2"
+					es_xdoblock wcs/wcsfunctions/wcs_checkevents2
+					es_xset wcs_val "icmd3"
+					es_xdoblock wcs/wcsfunctions/wcs_checkevents2
+				}
+				es_xelse do
+				{
+					es_keydelete server_var(wcs_type) server_var(wcs_userid)
+				}
+			}
+		}
+	}
+	if (server_var(wcs_debug) = 1) then profile end checkevents
+}
+
+block wcs_checkevents2
+{
+	es_keygetvalue wcs_cmd server_var(wcs_type) server_var(wcs_userid) server_var(wcs_val)
+	if (server_var(wcs_cmd) != "0") do
+	{
+
+		es_token wcs_number server_var(wcs_val) "1" "icmd"
+		es_format wcs_descr "idescr%1" server_var(wcs_number)
+		es_set wcs_itemdescrslot server_var(wcs_descr)
+		es_keygetvalue wcs_descr server_var(wcs_type) server_var(wcs_userid) server_var(wcs_descr)
+		if (server_var(wcs_descr) != "0") do
+		{
+			es alias wcs_runcmd server_var(wcs_descr)
+			wcs_runcmd
+		}
+		es_set wcs_itemslot server_var(wcs_val)
+		es alias wcs_runcmd server_var(wcs_cmd)
+		wcs_runcmd
+	}
+}
+
+block wcs_giveweapons
+{
+	es_xset wcs_wa 0
+	es_xset wcs_wb 0
+	es_keygetvalue wcs_wa wcsuserdata event_var(userid) "wa"
+	es_keygetvalue wcs_wb wcsuserdata event_var(userid) "wb"
+	if (server_var(wcs_wa) != "0") then es_xdelayed 1 wcs give event_var(userid) server_var(wcs_wa)
+	if (server_var(wcs_wb) != "0") then es_xdelayed 1.2 wcs give event_var(userid) server_var(wcs_wb)
+	if (server_var(wcs_wa) != "0") then es_xdelayed 1.4 playerset ammo event_var(userid) 1 50
+	if (server_var(wcs_wb) != "0") then es_xdelayed 1.6 playerset ammo event_var(userid) 2 50
+}
+
+block wcs_menuzero
+{
+	es_xset wcs_uid 0
+	es_xgetargv wcs_uid 1
+	es_exists wcs_exists userid server_var(wcs_uid)
+	if (server_var(wcs_exists) = 1) do
+	{
+		es_keycreate "wcsuserdata" server_var(wcs_uid)
+		es_keysetvalue "wcsuserdata" server_var(wcs_uid) "menu" "0"
+		es_keysetvalue "wcsuserdata" server_var(wcs_uid) "page" "0"
+		es_keysetvalue "wcsuserdata" server_var(wcs_uid) "confirm" "0"
+	}
+}
+
+block wcs_checkff
+{
+	if (server_var(mp_friendlyfire) != server_var(wcs_friendlyfire)) do
+	{
+		es mp_friendlyfire server_var(wcs_friendlyfire)
+		wcs_getlanguage "wcs_lng" "wcs_lng_checkff"
+		es_msg #green server_var(wcs_lng)
+	}
+}
+
+block wcs_bindmouse3
+{
+	es_xset wcs_userid 0
+	// if its a say command
+	es_xgetcmduserid wcs_userid
+	es_exists wcs_exists userid server_var(wcs_userid)
+	if (server_var(wcs_exists) = 1) do
+	{
+		// doesnt work all time !!
+		es_cexec server_var(wcs_userid) "bind mouse3 ultimate"
+		wcs_getlanguage "wcs_lng" "wcs_lng_bindmouse3a"
+		es_tell server_var(wcs_userid) #multi server_var(wcs_lng)
+		wcs_getlanguage "wcs_lng" "wcs_lng_bindmouse3b"
+		es_delayed 1 es_xtell server_var(wcs_userid) #multi server_var(wcs_lng)
+	}
+}
+
+block wcs_removefx
+{
+	if (server_var(wcs_debug) = "1") then echo wcs_removefx start
+	// type: freeze, speed, god
+	es_xset wcs_removeid 0
+	es_xset wcs_type 0
+	es_xgetargv wcs_type 1
+	es_xgetargv wcs_removeid 2
+	es_exists wcs_exists userid server_var(wcs_removeid)
+	if (server_var(wcs_exists) = 1) do
+	{
+		es_xset wcs_dead "1"
+		es_getplayerprop wcs_dead server_var(wcs_removeid) "CCSPlayer.baseclass.pl.deadflag"
+		if (server_var(wcs_dead) = "0") do
+		{
+			if (server_var(wcs_type) = "freeze") do
+			{
+				es wcs_setfx freeze server_var(wcs_removeid) = 0
+				es_setplayerprop server_var(wcs_removeid) CBasePlayer.m_fFlags 1
+			}
+			if (server_var(wcs_type) = "speed") do
+			{
+				es_xset wcs_speed 1.0
+				es_keygetvalue wcs_speed wcsuserdata server_var(wcs_removeid) "speed"
+				if (server_var(wcs_speed) != "0") then playerset speed server_var(wcs_removeid) server_var(wcs_speed)
+			}
+			if (server_var(wcs_type) = "god") then wcs_setfx god server_var(wcs_removeid) = 0
+		}
+	}
+	if (server_var(wcs_debug) = "1") then echo wcs_removefx server_var(wcs_type) end
+}
+
+block wcs_giveitem
+{
+	es_xset wcs_uid 0
+	es_xset wcs_item 0
+	es_xgetargv wcs_uid 1
+	es_xgetargv wcs_item 2
+	es_exists wcs_exists userid server_var(wcs_uid)
+	es_getplayerprop wcs_dead server_var(wcs_uid) "CCSPlayer.baseclass.pl.deadflag"
+	if (server_var(wcs_dead) = "1") then es_xset wcs_exists "0"
+	if (server_var(wcs_item) notin server_var(wcs_wpn_all)) then es_xset wcs_exists "0"
+	if (server_var(wcs_exists) = 1) do
+	{
+		// special HE/Flash/Smoke handling
+		es_xset wcs_stack 0
+		if ("grenade" in server_var(wcs_item)) then es_xset wcs_stack 1
+		if ("weapon_flashbang" = server_var(wcs_item)) then es_xset wcs_stack 1
+		if ("frag_" in server_var(wcs_item)) then es_xset wcs_stack 1
+		if (server_var(wcs_stack) = 1) do
+		{
+			es_xset wcs_ammo 0
+			es playerget ammo wcs_ammo server_var(wcs_uid) server_var(wcs_item)
+			es_xmath wcs_ammo + 1
+			es_give server_var(wcs_uid) server_var(wcs_item)
+			if (server_var(wcs_ammo) > 1) then playerset ammo server_var(wcs_uid) server_var(wcs_item) server_var(wcs_ammo)
+		}
+		es_xelse do
+		{
+			es_give server_var(wcs_uid) server_var(wcs_item)
+		}
+		es_xstring wcs_item replace "weapon_" " "
+		wcs_getlanguage "wcs_lng" "wcs_lng_gained"
+		es_format wcs_text "#lightgreen%1 : #green%2" server_var(wcs_lng) server_var(wcs_item)
+		es_tell server_var(wcs_uid) #multi server_var(wcs_text)
+	}
+}
+// <<<<<<<<<<<<<<<<< END CUSTOM COMMANDS <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+// >>>>>>>>>>>>>>>>> BEGIN DAMAGE EFFECTS >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+block wcs_dealdamage
+{
+	if (server_var(wcs_debug) = 1) then profile begin dealdamage
+	// usage:    wcs_dealdamage <userid> <targetid> <damage>
+	// userid:   give a VALID userid
+	// targetid: id of the target
+	// damage:   damage to do
+
+	es_xset wcs_dduserid 0
+	es_xset wcs_ddtargetid 0
+	es_xset wcs_dddamage 0
+
+	es_xgetargv wcs_dduserid 1
+	es_xgetargv wcs_ddtargetid 2
+	es_xgetargv wcs_dddamage 3
+
+	es_exists wcs_exists userid server_var(wcs_dduserid)
+	if (server_var(wcs_dddamage) < 1) then es_xset wcs_exists 0
+	if (server_var(wcs_exists) = 1) do
+	{
+		es_exists wcs_exists userid server_var(wcs_ddtargetid)
+		if (server_var(wcs_exists) = 1) do
+		{
+			es playerget health wcs_health server_var(wcs_ddtargetid)
+			if (server_var(wcs_health) > server_var(wcs_dddamage)) do
+			{
+				// doesnt work yet (EST bug) !!! - fixed by teachercreature
+				es wcs damage server_var(wcs_ddtargetid) server_var(wcs_dduserid) server_var(wcs_dddamage)
+				//        es_math wcs_health - server_var(wcs_dddamage)
+				//        es est_health server_var(wcs_ddtargetid) - server_var(wcs_health)
+			}
+			es_xelse do
+			{
+				// Fix works to slay also!!
+				es wcs damage server_var(wcs_ddtargetid) server_var(wcs_dduserid) server_var(wcs_dddamage)
+				// new method, player will die !
+				//        es_give server_var(wcs_ddtargetid) point_hurt
+				//       es_fire server_var(wcs_ddtargetid) !self addoutput "targetname badboy"
+				//        es_fire server_var(wcs_ddtargetid) point_hurt addoutput "targetname rps_damage"
+				//        es_format wcs_hurt_damage "Damage %1" server_var(wcs_dddamage)
+				//       es_fire server_var(wcs_ddtargetid) rps_damage addoutput server_var(wcs_hurt_damage)
+				//        es_fire server_var(wcs_ddtargetid) rps_damage addoutput "DamageType 1"
+				//        es_fire server_var(wcs_dduserid) rps_damage addoutput "DamageTarget badboy"
+				//        es_fire server_var(wcs_ddtargetid) rps_damage TurnOn
+				//       es_fire server_var(wcs_dduserid) rps_damage Hurt
+				//        es_fire server_var(wcs_ddtargetid) rps_damage kill
+				//        es_fire server_var(wcs_ddtargetid) !self addoutput "targetname taco"
+			}
+		}
+	}
+	if (server_var(wcs_debug) = 1) then profile end dealdamage
+}
+
+block wcs_explode
+{
+	// usage:     wcs_explode <userid> <targetid> <magnitude> <radius>
+	// userid:    give a VALID userid
+	// targetid:  id of the target
+	// magnitude: strenght of explosion
+	// radius:    size of the effect
+	es_xset wcs_userid 0
+	es_xset wcs_targetid 0
+	es_xset wcs_explodemagnitude 0
+	es_xset wcs_exploderadius 0
+	es_xgetargv wcs_userid 1
+	es_xgetargv wcs_targetid 2
+	es_xgetargv wcs_explodemagnitude 3
+	es_xgetargv wcs_exploderadius 4
+	es_exists wcs_exists userid server_var(wcs_userid)
+	es_xset wcs_tmp "0"
+	es_keygetvalue wcs_tmp "wcsuserdata" server_var(wcs_userid) "ismole"
+	if (server_var(wcs_tmp) = "1") then es_xset wcs_exists "0"
+	if (server_var(wcs_exists) = 1) do
+	{
+		es_exists wcs_exists userid server_var(wcs_targetid)
+		if (server_var(wcs_exists) = 1) do
+		{
+			// set to default if missing parameters
+			if (server_var(wcs_explodemagnitude) = 0) then es_xset wcs_explodemagnitude 10
+			if (server_var(wcs_exploderadius) = 0) then es_xset wcs_exploderadius 10
+			es_xset wcs_x 0
+			es_xset wcs_y 0
+			es_xset wcs_z 0
+			es_getplayerlocation wcs_x wcs_y wcs_z server_var(wcs_targetid)
+			// random explosion sound
+			es_xset wcs_exrand 0
+			es_xrand wcs_exrand 1 6
+			if (server_var(wcs_exrand) = 1) then es_xset wcs_sound "weapons\explode3.wav"
+			if (server_var(wcs_exrand) = 2) then es_xset wcs_sound "weapons\explode4.wav"
+			if (server_var(wcs_exrand) = 3) then es_xset wcs_sound "weapons\explode5.wav"
+			if (server_var(wcs_exrand) = 4) then es_xset wcs_sound "weapons\mortar\mortar_explode1.wav"
+			if (server_var(wcs_exrand) = 5) then es_xset wcs_sound "weapons\mortar\mortar_explode2.wav"
+			if (server_var(wcs_exrand) = 6) then es_xset wcs_sound "weapons\mortar\mortar_explode3.wav"
+			if (server_var(wcs_cfg_friendlyexplosion) = "1") do
+			{
+				//set explosion variables
+				es_give server_var(wcs_userid) env_explosion
+				//Origin
+				es_format wcs_format "origin %1 %2 %3" server_var(wcs_x) server_var(wcs_y) server_var(wcs_z)
+				es_fire server_var(wcs_userid) env_explosion addoutput server_var(wcs_format)
+				es_format wcs_format "%1,%2,%3" server_var(wcs_x) server_var(wcs_y) server_var(wcs_z)
+				es_setindexprop server_var(eventscripts_lastgive) CBaseEntity.m_vecOrigin server_var(wcs_format)
+				//Power
+				es_format wcs_format "imagnitude %1" server_var(wcs_explodemagnitude)
+				es_fire server_var(wcs_userid) env_explosion addoutput server_var(wcs_format)
+				//Range
+				es_format wcs_format "iradiusoverride %1" server_var(wcs_exploderadius)
+				es_fire server_var(wcs_userid) env_explosion addoutput server_var(wcs_format)
+				// Set the owner of the explosion.
+				es_xset owner 0
+				es_getplayerhandle owner server_var(wcs_userid)
+				es_xexists wcs_exists keygroup wcs_explosions
+				if (server_var(wcs_exists) = 1) then es_xkeygroupdelete wcs_explosions
+				es_xcreateentitylist wcs_explosions env_explosion
+				es_xset wcs_expindex 0
+				es_xforeachkey wcs_expindex in wcs_explosions "esnq es_xsetindexprop server_var(wcs_expindex) CBaseEntity.m_hOwnerEntity server_var(owner)"
+				// This is it... time to explode!
+				if (server_var(wcs_soundfx) = 1) then es_xemitsound entity server_var(eventscripts_lastgive) server_var(wcs_sound) 1 0.60
+				es_fire server_var(wcs_userid) env_explosion explode
+				es_fire server_var(wcs_userid) env_explosion kill
+			}
+			es_xelse do
+			{
+				// no area damage effect
+				es_xset wcs_exdmg 0
+				es_xcopy wcs_exdmg wcs_explodemagnitude
+				es_math wcs_exdmg * server_var(wcs_exploderadius)
+				es_xmath wcs_exdmg / 150
+				es wcs_decimal wcs_exdmg server_var(wcs_exdmg) 0
+				es wcs damage server_var(wcs_targetid) server_var(wcs_userid) server_var(wcs_exdmg)
+				//if (server_var(wcs_soundfx) = 1) then est_PlayPlayer server_var(wcs_targetid) server_var(wcs_sound)
+			}
+		}
+		es_xelse do
+		{
+			echo "[wcs] WARNING: called wcs_explode with non-existing targetid !"
+		}
+	}
+}
+// <<<<<<<<<<<<<<<<< END DAMAGE EFFECTS <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+// >>>>>>>>>>>>>>>>> CLEANUP >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+block wcs_cleanup
+{
+	// a try to implement a cleanup script, but Eventscripts cannot handle large files ...
+	es_xset wcs_lastplayed 0
+	es_xset wcs_time 0
+	es_xgettime wcs_time
+	es_xset wcs_removetime 0
+	es_set wcs_deletetime server_var(wcs_deletedays)
+	es_xmath wcs_deletetime * 86400
+	if (server_var(wcs_deletetime) > 0) do
+	{
+		if (server_var(wcs_debug) = 1) then profile begin cleanup_duration
+		es wcs_foreachkey wcs_key "if (server_var(wcs_key) != bot) then es_xif (server_var(wcs_key) != 0) then es_xdoblock wcs/wcsfunctions/wcs_cleanupcheck"
+		// delete every key with deleteflag = 1
+		es wcs_keyfilter deleteflag NOT 1 
+		// save xp to file
+		if (server_var(wcs_debug) = 1) then profile end cleanup_duration
+		es_msg Cleanup successfull, duration: server_var(cleanup_duration)
+	}
+	es_xelse do
+	{
+		echo "[wcs] WARNING: cleanup executed, but deletetime is 0 !! All players would have beed deleted ..."
+	}
+}
+
+block wcs_cleanupcheck
+{
+	es_set wcs_removetime server_var(wcs_time)
+	es wcs_keygetvalue wcs_lastplayed server_var(wcs_key) lastplayed
+	es_math wcs_removetime - server_var(wcs_lastplayed)
+	if (server_var(wcs_removetime) >= server_var(wcs_deletetime)) then es wcs_keysetvalue server_var(wcs_key) "deleteflag" "1"
+}
+// <<<<<<<<<<<<<<<<< END CLEANUP <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+
+// >>>>>>>>>>>>>>>>> START COMMON INFO >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+block wcs_showinfohandle
+{
+	if (server_var(wcs_debug) = "1") then echo wcs_showinfohandle start
+	// custom command - argument is type of showinfo
+	es_xset wcs_type 0
+	es_xgetargv wcs_type 1
+	es_exists wcs_exists key "wcsuserdata" event_var(userid)
+	if (server_var(wcs_type) notin "raceinfo|shopinfo|playerinfo") then es_xset wcs_exists 0
+	if (server_var(wcs_exists) = 1) do
+	{
+		es_keygetvalue wcs_page "wcsuserdata" event_var(userid) "page"
+		// handle back
+		if (event_var(commandstring) = "8") do
+		{
+			if (server_var(wcs_page) > 1) do
+			{
+				es_xmath wcs_page - 2
+				es_keysetvalue "wcsuserdata" event_var(userid) "page" server_var(wcs_page)
+				if (server_var(wcs_type) = "raceinfo") then wcs_showraceinfo event_var(userid)
+				if (server_var(wcs_type) = "shopinfo") then wcs_showshopinfo event_var(userid)
+				if (server_var(wcs_type) = "playerinfo") then wcs_showplayerinfo event_var(userid)
+			}
+			es_xelse do
+			{
+				es_keysetvalue "wcsuserdata" event_var(userid) "page" "0"
+				es_keysetvalue "wcsuserdata" event_var(userid) "menu" "0"
+			}
+		}
+		// handle next
+		if (event_var(commandstring) = "9") do
+		{
+			es_xset wcs_next 0
+			if (server_var(wcs_type) != "playerinfo") then es_xkeygetvalue wcs_next "wcsinfo" server_var(wcs_type) server_var(wcs_page)
+			if (server_var(wcs_type) = "playerinfo") do
+			{
+				es_xgetplayercount wcs_playercount
+				es_xcopy wcs_tmp wcs_page
+				es_xmath wcs_tmp * 7
+				if (server_var(wcs_playercount) > server_var(wcs_tmp)) then es_xset wcs_next "ok"
+			}
+			if (server_var(wcs_next) != "0") do
+			{
+				es_xmath wcs_page + 1
+				if (server_var(wcs_type) = "raceinfo") then wcs_showraceinfo event_var(userid)
+				if (server_var(wcs_type) = "shopinfo") then wcs_showshopinfo event_var(userid)
+				if (server_var(wcs_type) = "playerinfo") then wcs_showplayerinfo event_var(userid)
+			}
+			es_xelse do
+			{
+				es_keysetvalue wcsuserdata event_var(userid) "page" "0"
+				es_keysetvalue wcsuserdata event_var(userid) "menu" "0"
+			}
+		}
+		if (event_var(commandstring) != "9") do
+		{
+			if (event_var(commandstring) != "8") do
+			{
+				if (server_var(wcs_type) = "shopinfo") do
+				{
+					if (event_var(commandstring) = "7") do
+					{
+						es_keygetvalue wcs_category wcsshop server_var(wcs_page) category
+						es wcs_shop_menu2 event_var(userid) server_var(wcs_category)
+					}
+					es_xelse do
+					{
+						es_keysetvalue "wcsuserdata" event_var(userid) "page" "0"
+						es_keysetvalue "wcsuserdata" event_var(userid) "menu" "0"
+					}
+				}
+				if (server_var(wcs_type) = "playerinfo") do
+				{
+					if (event_var(commandstring) != "10") do
+					{
+						es_xcopy wcs_target wcs_page
+						es_xmath wcs_target * 7
+						es_xmath wcs_target - 7
+						es_math wcs_target + event_var(commandstring)
+						es_xset wcs_scounter 1
+						es_xforeachkey wcs_key in "wcsuserdata" "if (server_var(wcs_target) = server_var(wcs_scounter)) then es_xdoblock wcs/wcsusers/wcs_playerinfo_details;es_xmath wcs_scounter + 1"
+					}
+				}
+				if (server_var(wcs_type) != "shopinfo") do
+				{
+					if (server_var(wcs_type) != "playerinfo") do
+					{
+						es_keysetvalue "wcsuserdata" event_var(userid) "page" "0"
+						es_keysetvalue "wcsuserdata" event_var(userid) "menu" "0"
+					}
+				}
+			}
+		}
+	}
+	es_xelse do
+	{
+		es_keycreate "wcsuserdata" event_var(userid)
+	}
+	if (server_var(wcs_debug) = "1") then echo wcs_showinfohandle end
+}
+// <<<<<<<<<<<<<<<<< END COMMON INFO <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+block wcs_levi_reactivate
+{
+	// fix for losing gravity when climbing ladders
+	es_exists wcs_exists key "wcsuserdata" event_var(userid)
+	if (server_var(wcs_exists) = 1) do
+	{
+		es_keygetvalue wcs_gravity "wcsuserdata" event_var(userid) "gravity"
+		if (server_var(wcs_gravity) != "0") do
+		{
+			es_getplayerprop wcs_dead event_var(userid) "CCSPlayer.baseclass.pl.deadflag"
+			if (server_var(wcs_dead) = "0") then wcs gravity event_var(userid) server_var(wcs_gravity)
+		}
+	}
+}
+
+block wcs_flash
+{
+	es_xgetargv wcs_uid 1
+	es_xgetargv wcs_targetid 2
+	// "superflash" effect, attacker has the flag
+	es_exists wcs_exists key wcsuserdata server_var(wcs_uid)
+	if (server_var(wcs_exists) = 1) do
+	{
+		es_keygetvalue wcs_target wcsuserdata server_var(wcs_uid) flash_target
+		if (server_var(wcs_target) = "attacker") do
+		{
+			es_keygetvalue wcs_duration wcsuserdata server_var(wcs_uid) flash_duration
+			es_keygetvalue wcs_alpha wcsuserdata server_var(wcs_uid) flash_alpha
+			if (server_var(wcs_duration) != "0") do
+			{
+				es_getplayerprop wcs_tmp server_var(wcs_targetid) CCSPlayer.m_flFlashDuration
+				es_math wcs_duration * server_var(wcs_tmp)
+				es_setplayerprop server_var(wcs_targetid) CCSPlayer.m_flFlashDuration server_var(wcs_duration)
+			}
+			if (server_var(wcs_alpha) != "0") then es_xsetplayerprop server_var(wcs_targetid) CCSPlayer.m_flFlashMaxAlpha server_var(wcs_alpha)
+		}
+	}
+	// "weak flash" effect, victim has the flag
+	es_exists wcs_exists key wcsuserdata server_var(wcs_targetid)
+	if (server_var(wcs_exists) = 1) do
+	{
+		es_keygetvalue wcs_target wcsuserdata server_var(wcs_targetid) flash_target
+		if (server_var(wcs_target) = "victim") do
+		{
+			es_keygetvalue wcs_duration wcsuserdata server_var(wcs_targetid) flash_duration
+			es_keygetvalue wcs_alpha wcsuserdata server_var(wcs_targetid) flash_alpha
+			if (server_var(wcs_duration) != "0") do
+			{
+				es_getplayerprop wcs_tmp server_var(wcs_targetid) CCSPlayer.m_flFlashDuration
+				es_math wcs_duration * server_var(wcs_tmp)
+				es_setplayerprop server_var(wcs_targetid) CCSPlayer.m_flFlashDuration server_var(wcs_duration)
+			}
+			if (server_var(wcs_alpha) != "0") then es_xsetplayerprop server_var(wcs_targetid) CCSPlayer.m_flFlashMaxAlpha server_var(wcs_alpha)
+		}
+	}
+}
+
+block wcs_saveplayer
+{
+	if (server_var(wcs_debug) = 1) then profile begin saveplayer
+	es_xgetargv wcs_uid 1
+	es_exists wcs_exists key wcsuserdata server_var(wcs_uid)
+	if (server_var(wcs_exists) = 1) do
+	{
+		// save the record
+		es_keygetvalue wcs_id "wcsuserdata" server_var(wcs_uid) "id"
+		es_keygetvalue wcs_race "wcsuserdata" server_var(wcs_uid) "race"
+		es_keygetvalue wcs_level "wcsuserdata" server_var(wcs_uid) "level"
+		es_keygetvalue wcs_xp "wcsuserdata" server_var(wcs_uid) "xp"
+		es_keygetvalue wcs_unused "wcsuserdata" server_var(wcs_uid) "unused"
+		if ("BOT" in server_var(wcs_id)) do
+		{
+			es_getplayername wcs_name server_var(wcs_uid)
+			es wcs_capitalize wcs_name server_var(wcs_name)
+			es_format wcs_id "BOT_%1" server_var(wcs_name)
+		}
+
+		es wcs_keysetvalue server_var(wcs_id) "race" server_var(wcs_race)
+		// save all skill levels
+		es_xset wcs_counter 1
+		es_keygetvalue wcs_numberofskills "wcsraces" server_var(wcs_race) "numberofskills"
+		es_format wcs_tmp2 "%1|%2" server_var(wcs_level) server_var(wcs_xp)
+		while "server_var(wcs_counter) <= server_var(wcs_numberofskills)" "es_format wcs_skillnumber skill_%1 server_var(wcs_counter);es_keygetvalue wcs_skill wcsuserdata server_var(wcs_uid) server_var(wcs_skillnumber);if (server_var(wcs_skill) = 0) then es_xset wcs_skill 0;es_format wcs_tmp2 %1|%2 server_var(wcs_tmp2) server_var(wcs_skill);es_xmath wcs_counter + 1"
+		es_format wcs_racef "race_%1" server_var(wcs_race)
+		es wcs_keysetvalue server_var(wcs_id) server_var(wcs_racef) server_var(wcs_tmp2)
+		es_keysetvalue wcsuserdata server_var(wcs_uid) server_var(wcs_racef) server_var(wcs_tmp2)
+	}
+	if (server_var(wcs_debug) = 1) then profile end saveplayer
+}
+
+block wcs_getplayer_while
+{
+	es_xset wcs_skill 0
+	es_format wcs_skillnumber skill_%1 server_var(wcs_counter)
+	es_xcopy wcs_scounter wcs_counter
+	es_xmath wcs_scounter + 2
+	es_token wcs_skill server_var(wcs_tmp1) server_var(wcs_scounter) |;if(server_var(wcs_skill) = 0) then es_xset wcs_skill 0
+	es_keysetvalue wcsuserdata server_var(wcs_uid) server_var(wcs_skillnumber) server_var(wcs_skill)
+	es_math wcs_counter + 1;es_math wcs_skilllevel + server_var(wcs_skill)
+}
+
+block wcs_getplayer
+{
+	if (server_var(wcs_debug) = 1) then profile begin getplayer
+	es_xgetargv wcs_uid 1
+	es_exists wcs_exists key wcsuserdata server_var(wcs_uid)
+	if (server_var(wcs_exists) = 1) do
+	{
+		// get the wcsusers -> wcsuserdata stuff
+		es_keygetvalue wcs_id "wcsuserdata" server_var(wcs_uid) "id"
+		es wcs_keygetvalue wcs_race server_var(wcs_id) "race"
+		es_format wcs_racef "race_%1" server_var(wcs_race)
+		es wcs_keygetvalue wcs_tmp1 server_var(wcs_id) server_var(wcs_racef)
+		// if the record is empty (new race) init with 0
+		if (server_var(wcs_tmp1) = "0") do
+		{
+			es_xset wcs_counter 1
+			es_keygetvalue wcs_numberofskills "wcsraces" server_var(wcs_race) "numberofskills"
+			es_xformat wcs_tmp1 "0|0"
+			while "server_var(wcs_counter) <= server_var(wcs_numberofskills)" "es_format wcs_tmp1 %1|0 server_var(wcs_tmp1);es_xmath wcs_counter + 1"
+		}
+		es_keysetvalue wcsuserdata server_var(wcs_uid) server_var(wcs_racef) server_var(wcs_tmp1)
+		// new version of the playerrecord
+		es_token wcs_level server_var(wcs_tmp1) 1 "|"
+		es_token wcs_xp server_var(wcs_tmp1) 2 "|"
+		es_xset wcs_counter 1
+		es_xset wcs_skilllevel 0
+		while "server_var(wcs_counter) <= server_var(wcs_numberofskills)" "es_xdoblock wcs/wcsfunctions/wcs_getplayer_while"
+		es_keysetvalue wcsuserdata server_var(wcs_uid) race server_var(wcs_race)
+		es_keysetvalue wcsuserdata server_var(wcs_uid) level server_var(wcs_level)
+		es_keysetvalue wcsuserdata server_var(wcs_uid) xp server_var(wcs_xp)
+		// CALCULATE UNUSED !!!!!!!!!!!!!
+		es_xset wcs_unused 0
+		if (server_var(wcs_level) > server_var(wcs_skilllevel)) do
+		{
+			es_xcopy wcs_unused wcs_level
+			es_math wcs_unused - server_var(wcs_skilllevel)
+		}
+		es_keysetvalue "wcsuserdata" server_var(wcs_uid) "unused" server_var(wcs_unused)
+		es_xset wcs_total_level 0
+		es_xset wcs_max_level 0
+		es wcs_keygetvalue wcs_total_level server_var(wcs_id) total_level
+		if (server_var(wcs_cfg_globallevel) = "0") then es_keysetvalue wcsuserdata server_var(wcs_uid) total_level server_var(wcs_total_level)
+		if (server_var(wcs_cfg_globallevel) = "1") do
+		{
+			es_keysetvalue wcsuserdata server_var(wcs_uid) level server_var(wcs_max_level)
+			es_keysetvalue wcsuserdata server_var(wcs_uid) total_level server_var(wcs_total_level)
+		}
+	}
+	if (server_var(wcs_debug) = 1) then profile end getplayer
+}
+
+block total_level
+{
+es_msg server_var(wcs_val)
+es wcs_keygetvalue wcs_tmp server_var(wcs_id) server_var(wcs_val)
+es_token wcs_tmp server_var(wcs_tmp) 1 |
+es_math wcs_total_level + server_var(wcs_tmp)
+if (server_var(wcs_tmp) > server_var(wcs_max_level)) then es_xset wcs_max_level server_var(wcs_tmp)
+}
+
+block wcs_convertdb
+{
+	//	"STEAM_0:1:9632745"
+	//	{
+	//		"race"		"2"
+	//		"lastplayed"		"1174434179"
+	//		"level_1"		"0"
+	//		"xp_1"		"0"
+	//		"unused_1"		"0"
+	//		"race1_skill1"		"0"
+	//		"race1_skill2"		"0"
+	//		"race1_skill3"		"0"
+	//		"race1_skill4"		"0"
+	//		"level_4"		"11"
+	//		"xp_4"		"680"
+	//		"unused_4"		"0"
+	//		"race4_skill1"		"8"
+	//		"race4_skill2"		"1"
+	//		"race4_skill3"		"0"
+	//		"race4_skill4"		"2"
+	//		"race_4"		"16|1037|8|0|0|8"
+	//		"race_2"		"3|21|2|0|0|0"
+	//	}
+	// race = wcs_counter, key is convtmp, steamid is wcs_id, wcs_convskill, wcs_convlevel, wcs_convxp
+	// level
+	es_format wcs_levelf "level_%1" server_var(wcs_counter)
+	es wcs_keygetvalue wcs_convlevel "convtmp" server_var(wcs_levelf)
+	// check if new level already exists
+	es_format wcs_racef "race_%1" server_var(wcs_counter)
+	es wcs_keygetvalue wcs_convtmp1 "convtmp" server_var(wcs_racef)
+	if (server_var(wcs_convtmp1) != "0") do
+	{
+		es_token wcs_convtmp2 server_var(wcs_convtmp1) 1 "|"
+		if (server_var(wcs_convtmp2) > server_var(wcs_convlevel)) do
+		{
+			// insert current value, do not convert
+			es_xset wcs_convlevel "0"
+			if ("BOT" in event_var(es_steamid)) do
+			{
+				es_getplayername wcs_name event_var(userid)
+				es wcs_capitalize wcs_name server_var(wcs_name)
+				es_format wcs_id "BOT_%1" server_var(wcs_name)
+			}
+			es wcs_keysetvalue server_var(wcs_id) server_var(wcs_racef) server_var(wcs_convtmp1)
+		}
+	}
+	// xp
+	es_format wcs_xpf "xp_%1" server_var(wcs_counter)
+	es wcs_keygetvalue wcs_convxp "convtmp" server_var(wcs_xpf)
+	if (server_var(wcs_convlevel) != "0") do
+	{
+		es_format wcs_tmp2 "%1|%2" server_var(wcs_convlevel) server_var(wcs_convxp)
+		// skills
+		es_keygetvalue wcs_convnumber "wcsraces" server_var(wcs_counter) "numberofskills"
+		es_xset wcs_convcounter "1"
+		while "server_var(wcs_convcounter) <= server_var(wcs_convnumber)" "es_format wcs_convskill race%1_skill%2 server_var(wcs_counter) server_var(wcs_convcounter);es wcs_keygetvalue wcs_convskill convtmp server_var(wcs_convskill);if (server_var(wcs_convskill) = 0) then es_xset wcs_convskill 0;es_format wcs_tmp2 %1|%2 server_var(wcs_tmp2) server_var(wcs_convskill);es_xmath wcs_convcounter + 1"
+		if ("BOT" in event_var(es_steamid)) do
+		{
+			es_getplayername wcs_name event_var(userid)
+			es wcs_capitalize wcs_name server_var(wcs_name)
+			es_format wcs_id "BOT_%1" server_var(wcs_name)
+		}
+		es wcs_keysetvalue server_var(wcs_id) server_var(wcs_racef) server_var(wcs_tmp2)
+	}
+}
+
+block wcs_feedback
+{
+	es_xgetcmduserid wcs_uid
+	es_xgetargs wcs_text
+	if (server_var(wcs_text) != "0") do
+	{
+		es_getplayername wcs_name server_var(wcs_uid)
+		es_exists wcs_exists key "wcsfeedback" server_var(wcs_name)
+		if (server_var(wcs_exists) = "0") then es_xkeycreate "wcsfeedback" server_var(wcs_name)
+		es_keygetvalue wcs_tmp1 "wcsfeedback" server_var(wcs_name) "number"
+		if (server_var(wcs_tmp1) = "0") then es_xset wcs_tmp1 "0"
+		es_xmath wcs_tmp1 + 1
+		es_keysetvalue "wcsfeedback" server_var(wcs_name) "number" server_var(wcs_tmp1)
+		es_keysetvalue "wcsfeedback" server_var(wcs_name) server_var(wcs_tmp1) server_var(wcs_text)
+		wcs_getlanguage "wcs_lng" "wcs_lng_feedback"
+		es_tell server_var(wcs_uid) #multi server_var(wcs_lng)
+		es_xkeygroupsave "wcsfeedback" "|wcs"
+	}
+	es_xelse do
+	{
+		wcs_getlanguage "wcs_lng" "wcs_lng_feedbackfailed"
+		es_tell server_var(wcs_uid) #multi server_var(wcs_lng)
+	}
+}
+
+block wcs_savexp
+{
+	es_xgetcmduserid wcs_userid
+	wcs_getlanguage "wcs_lng" "wcs_lng_savexp"
+	es_tell server_var(wcs_userid) #multi server_var(wcs_lng)
+	es wcs_saveplayer server_var(wcs_userid)
+}
+
+block wcs_wcsmenu
+{
+	es_xgetcmduserid wcs_userid
+	es_exists wcs_exists userid server_var(wcs_userid)
+	if (server_var(wcs_exists) = 1) do
+	{
+		es wcs_menuzero server_var(wcs_userid)
+		es_keysetvalue "wcsuserdata" server_var(wcs_userid) "menu" "wcsmenu"
+		wcs_getlanguage "wcs_lng" "wcs_lng_wcsmenu"
+		es_menu 0 server_var(wcs_userid) server_var(wcs_lng)
+	}
+}
+
+block wcs_wcsmenu_handle
+{
+	if (event_var(commandstring) = "1") do
+	{
+		es_xset wcs_exists 1
+		if (server_var(wcs_cfg_noshopmenu) = "1") then es_xset wcs_exists 0
+		if (server_var(wcs_game) = server_var(wcs_game_dods)) then es_xif (server_var(wcs_cfg_dods_noshopmenu) = "1") then es_xset wcs_exists 0
+		if (server_var(wcs_exists) = "0") do
+		{
+			wcs_getlanguage "wcs_lng" "wcs_lng_noshopmenu"
+			es_tell event_var(userid) #multi server_var(wcs_lng)
+			es_xset wcs_exists 0
+		}
+		if (server_var(wcs_exists) = "1") do
+		{
+			if (server_var(wcs_game) = server_var(wcs_game_dods)) then wcs_showcredits event_var(userid)
+			es wcs_shop_menu event_var(userid)
+		}
+	}
+	if (event_var(commandstring) = "2") then wcs_showshopinfo event_var(userid)
+	if (event_var(commandstring) = "3") then wcs_showskills event_var(userid)
+	if (event_var(commandstring) = "4") then wcs_resetskills event_var(userid)
+	if (event_var(commandstring) = "5") then wcs_spendskills event_var(userid)
+	if (event_var(commandstring) = "6") then wcs_race_menu event_var(userid)
+	if (event_var(commandstring) = "7") then wcs_showraceinfo event_var(userid)
+	if (event_var(commandstring) = "8") then wcs_showplayerinfo event_var(userid)
+	if (event_var(commandstring) = "9") then wcs_showtop10 event_var(userid)
+}
+
